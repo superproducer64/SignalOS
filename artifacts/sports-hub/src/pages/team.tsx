@@ -1,4 +1,4 @@
-import { useGetTeam } from "@workspace/api-client-react";
+import { useGetTeam, getGetTeamQueryKey } from "@workspace/api-client-react";
 import { TeamCardItem } from "@/components/TeamCardItem";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useParams, Link } from "wouter";
@@ -7,7 +7,7 @@ import { ChevronLeft } from "lucide-react";
 export default function Team() {
   const params = useParams();
   const teamId = params.id as string;
-  const { data: team, isLoading } = useGetTeam(teamId, { query: { enabled: !!teamId } });
+  const { data: team, isLoading } = useGetTeam(teamId, { query: { enabled: !!teamId, queryKey: getGetTeamQueryKey(teamId) } });
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground pb-8">
