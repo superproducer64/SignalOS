@@ -4,6 +4,17 @@ import { StoryCard, teamToStories, type Story } from "@/components/StoryCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, X, Bookmark } from "lucide-react";
 import { useSavedTeams } from "@/hooks/use-saved-teams";
+import { Link } from "wouter";
+
+/** Pick the first highlight story for a team, fall back to score */
+function teamHeroStory(stories: Story[]): Story | null {
+  return (
+    stories.find((s) => s.type === "HIGHLIGHT") ??
+    stories.find((s) => s.type === "SCORE") ??
+    stories[0] ??
+    null
+  );
+}
 
 export default function Home() {
   const { data: teams, isLoading } = useGetTeams();
@@ -25,6 +36,19 @@ export default function Home() {
     }
   }
 
+  // Per-team highlight stories for the 3-block strip
+  const teamHighlights: { teamId: string; primaryColor: string; secondaryColor: string; name: string; story: Story | null }[] =
+    teams?.map((team) => {
+      const stories = teamToStories(team, new Set());
+      return {
+        teamId: team.id,
+        primaryColor: team.primaryColor,
+        secondaryColor: team.secondaryColor,
+        name: team.name,
+        story: teamHeroStory(stories),
+      };
+    }) ?? [];
+
   // Filter by active team tab AND search query
   const filtered = allStories.filter((s) => {
     const matchesTeam = activeTeamId ? s.teamId === activeTeamId : true;
@@ -44,7 +68,7 @@ export default function Home() {
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground pb-10">
-      {/* Sticky header */}
+      {/* ── Sticky header ── */}
       <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-md border-b border-border/50 shadow-sm">
         {/* Title row */}
         <div className="flex items-center gap-2 max-w-md mx-auto px-4 pt-4 pb-2">
@@ -88,11 +112,10 @@ export default function Home() {
           </div>
         )}
 
-        {/* Team shortcut tab bar — ALL teams */}
+        {/* Team tab shortcuts */}
         {!isLoading && teams && teams.length > 0 && (
           <div className="max-w-md mx-auto px-4 pb-3">
             <div className="flex gap-2 overflow-x-auto scrollbar-none">
-              {/* "All" tab */}
               <button
                 type="button"
                 data-testid="tab-all"
@@ -105,8 +128,6 @@ export default function Home() {
               >
                 All
               </button>
-
-              {/* One tab per team */}
               {teams.map((team) => {
                 const isActive = activeTeamId === team.id;
                 const saved = isSaved(team.id);
@@ -136,7 +157,10 @@ export default function Home() {
                     {saved && (
                       <Bookmark
                         className="w-2.5 h-2.5 shrink-0"
-                        style={{ fill: isActive ? "#fff" : team.primaryColor, color: isActive ? "#fff" : team.primaryColor }}
+                        style={{
+                          fill: isActive ? "#fff" : team.primaryColor,
+                          color: isActive ? "#fff" : team.primaryColor,
+                        }}
                       />
                     )}
                     {team.name}
@@ -149,12 +173,92 @@ export default function Home() {
       </header>
 
       <main className="max-w-md mx-auto">
-        {/* Section label */}
+        {/* ── 3-block horizontal team highlight strip ── */}
+        {!query && !activeTeamId && (
+          <div className="px-4 pt-4 pb-1">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+                Team Highlights
+              </span>
+              <div className="flex-1 h-px bg-border/30" />
+            </div>
+
+            {isLoading ? (
+              <div className="grid grid-cols-3 gap-2">
+                <Skeleton className="h-[140px] rounded-xl" />
+                <Skeleton className="h-[140px] rounded-xl" />
+                <Skeleton className="h-[140px] rounded-xl" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                {teamHighlights.map(({ teamId, primaryColor, secondaryColor, name, story }) => (
+                  <Link
+                    key={teamId}
+                    href={`/team/${teamId}`}
+                    className="no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl"
+                    data-testid={`block-team-${teamId}`}
+                  >
+                    <div
+                      className="relative overflow-hidden rounded-xl h-[140px] flex flex-col justify-end cursor-pointer transition-transform duration-150 active:scale-95 hover:opacity-90"
+                      style={{
+                        background: `linear-gradient(160deg, ${secondaryColor}cc 0%, ${primaryColor}ee 100%)`,
+                      }}
+                    >
+                      {/* Diagonal stripe texture */}
+                      <div
+                        className="absolute inset-0 opacity-10"
+                        style={{
+                          backgroundImage: `repeating-linear-gradient(
+                            -45deg,
+                            transparent,
+                            transparent 6px,
+                            rgba(255,255,255,0.5) 6px,
+                            rgba(255,255,255,0.5) 7px
+                          )`,
+                        }}
+                      />
+                      {/* Team watermark */}
+                      <div className="absolute inset-0 flex items-center justify-center select-none pointer-events-none text-[42px] font-black uppercase tracking-tighter opacity-10 text-white leading-none px-1 text-center">
+                        {name}
+                      </div>
+                      {/* Bottom gradient */}
+                      <div className="absolute bottom-0 left-0 right-0 h-2/3 bg-gradient-to-t from-black/70 to-transparent" />
+
+                      {/* Bookmark indicator */}
+                      {isSaved(teamId) && (
+                        <div className="absolute top-2 right-2">
+                          <Bookmark className="w-3.5 h-3.5" style={{ fill: "#fff", color: "#fff" }} />
+                        </div>
+                      )}
+
+                      {/* Content */}
+                      <div className="relative z-10 p-2.5">
+                        <div
+                          className="text-[8px] font-black uppercase tracking-widest mb-0.5 opacity-90"
+                          style={{ color: primaryColor === "#FFD700" || primaryColor === "#FFC72C" ? "#fff" : "#fff" }}
+                        >
+                          {name}
+                        </div>
+                        {story && (
+                          <p className="text-white text-[10px] font-bold leading-tight line-clamp-3">
+                            {story.headline}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Section label ── */}
         <div className="px-4 pt-4 pb-2">
           <div className="flex items-center gap-2">
             <span
               className="text-[11px] font-black uppercase tracking-widest"
-              style={activeTeam ? { color: activeTeam.primaryColor } : { color: "" }}
+              style={activeTeam ? { color: activeTeam.primaryColor } : {}}
             >
               {activeTeam
                 ? `${activeTeam.city} ${activeTeam.name}`
@@ -176,12 +280,11 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Story Feed */}
+        {/* ── Story Feed ── */}
         <div className="px-4 pb-4 flex flex-col gap-4">
           {isLoading ? (
             <>
               <Skeleton className="h-[340px] w-full rounded-xl" />
-              <Skeleton className="h-[180px] w-full rounded-xl" />
               <Skeleton className="h-[180px] w-full rounded-xl" />
               <Skeleton className="h-[180px] w-full rounded-xl" />
             </>
