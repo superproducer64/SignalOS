@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: teams
+    description: Sports team data
 paths:
   /healthz:
     get:
@@ -24,6 +26,45 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /teams:
+    get:
+      operationId: getTeams
+      tags: [teams]
+      summary: Get all teams
+      description: Returns all sports team cards with score, highlight, and trade news
+      responses:
+        "200":
+          description: List of team cards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TeamCard"
+  /teams/{teamId}:
+    get:
+      operationId: getTeam
+      tags: [teams]
+      summary: Get a single team card
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Team card data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamCard"
+        "404":
+          description: Team not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +74,113 @@ components:
           type: string
       required:
         - status
-
+    Score:
+      type: object
+      properties:
+        homeTeam:
+          type: string
+        awayTeam:
+          type: string
+        homeScore:
+          type: integer
+        awayScore:
+          type: integer
+        status:
+          type: string
+          description: "e.g. FINAL, IN PROGRESS, UPCOMING"
+        gameDate:
+          type: string
+        quarter:
+          type: string
+          nullable: true
+        timeRemaining:
+          type: string
+          nullable: true
+      required:
+        - homeTeam
+        - awayTeam
+        - homeScore
+        - awayScore
+        - status
+        - gameDate
+    Highlight:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        player:
+          type: string
+        timestamp:
+          type: string
+      required:
+        - title
+        - description
+        - player
+        - timestamp
+    TradeNews:
+      type: object
+      properties:
+        headline:
+          type: string
+        summary:
+          type: string
+        player:
+          type: string
+        date:
+          type: string
+        type:
+          type: string
+          description: "e.g. TRADE, SIGNING, RELEASE, INJURY"
+      required:
+        - headline
+        - summary
+        - player
+        - date
+        - type
+    TeamCard:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        city:
+          type: string
+        league:
+          type: string
+        sport:
+          type: string
+        primaryColor:
+          type: string
+        secondaryColor:
+          type: string
+        score:
+          $ref: "#/components/schemas/Score"
+        highlights:
+          type: array
+          items:
+            $ref: "#/components/schemas/Highlight"
+        tradeNews:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeNews"
+      required:
+        - id
+        - name
+        - city
+        - league
+        - sport
+        - primaryColor
+        - secondaryColor
+        - score
+        - highlights
+        - tradeNews
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
