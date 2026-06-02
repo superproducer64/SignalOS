@@ -11,6 +11,7 @@ const teams = [
     sport: "Football",
     primaryColor: "#FFB612",
     secondaryColor: "#101820",
+    imageUrl: "https://picsum.photos/seed/steelers-stadium/800/500",
     score: {
       homeTeam: "Pittsburgh Steelers",
       awayTeam: "Baltimore Ravens",
@@ -28,6 +29,7 @@ const teams = [
           "Kenny Pickett found George Pickens in stride down the sideline for a go-ahead touchdown in the fourth quarter, silencing the crowd in Baltimore.",
         player: "Kenny Pickett",
         timestamp: "Q4 2:14",
+        imageUrl: "https://picsum.photos/seed/football-pass/800/500",
       },
       {
         title: "T.J. Watt Forced Fumble",
@@ -35,6 +37,7 @@ const teams = [
           "Watt stripped Lamar Jackson on a scramble and Cam Heyward recovered at the Baltimore 31-yard line, setting up the Steelers' go-ahead drive.",
         player: "T.J. Watt",
         timestamp: "Q3 8:55",
+        imageUrl: "https://picsum.photos/seed/football-tackle/800/500",
       },
     ],
     tradeNews: [
@@ -45,6 +48,7 @@ const teams = [
         player: "T.J. Watt",
         date: "May 28, 2026",
         type: "SIGNING",
+        imageUrl: "https://picsum.photos/seed/nfl-signing/800/500",
       },
       {
         headline: "WR Pickens Trade Rumors Emerge",
@@ -53,6 +57,7 @@ const teams = [
         player: "George Pickens",
         date: "May 25, 2026",
         type: "TRADE",
+        imageUrl: "https://picsum.photos/seed/nfl-trade/800/500",
       },
       {
         headline: "Najee Harris Released",
@@ -61,6 +66,7 @@ const teams = [
         player: "Najee Harris",
         date: "May 20, 2026",
         type: "RELEASE",
+        imageUrl: "https://picsum.photos/seed/nfl-release/800/500",
       },
     ],
   },
@@ -72,6 +78,7 @@ const teams = [
     sport: "Basketball",
     primaryColor: "#CE1141",
     secondaryColor: "#C4CED4",
+    imageUrl: "https://picsum.photos/seed/rockets-arena/800/500",
     score: {
       homeTeam: "Houston Rockets",
       awayTeam: "Golden State Warriors",
@@ -89,6 +96,7 @@ const teams = [
           "Jalen Green drained a contested three-pointer with 18 seconds left to put Houston up four and effectively close out Golden State in a wild fourth quarter.",
         player: "Jalen Green",
         timestamp: "Q4 0:18",
+        imageUrl: "https://picsum.photos/seed/basketball-shot/800/500",
       },
       {
         title: "Sengun Dominant in the Paint",
@@ -96,6 +104,7 @@ const teams = [
           "Alperen Sengun posted 26 points and 12 rebounds, bullying the Warriors frontcourt all night and converting a crucial and-one in the third.",
         player: "Alperen Sengun",
         timestamp: "Q3 5:33",
+        imageUrl: "https://picsum.photos/seed/basketball-paint/800/500",
       },
     ],
     tradeNews: [
@@ -106,6 +115,7 @@ const teams = [
         player: "Tony Bradley",
         date: "May 29, 2026",
         type: "TRADE",
+        imageUrl: "https://picsum.photos/seed/nba-trade/800/500",
       },
       {
         headline: "Ime Udoka Signs Extension",
@@ -114,6 +124,7 @@ const teams = [
         player: "Ime Udoka",
         date: "May 22, 2026",
         type: "SIGNING",
+        imageUrl: "https://picsum.photos/seed/nba-coach/800/500",
       },
       {
         headline: "Green Exits with Ankle Sprain",
@@ -122,6 +133,7 @@ const teams = [
         player: "Jalen Green",
         date: "May 31, 2026",
         type: "INJURY",
+        imageUrl: "https://picsum.photos/seed/nba-injury/800/500",
       },
     ],
   },
@@ -133,6 +145,7 @@ const teams = [
     sport: "Baseball",
     primaryColor: "#002D62",
     secondaryColor: "#EB6E1F",
+    imageUrl: "https://picsum.photos/seed/astros-field/800/500",
     score: {
       homeTeam: "Houston Astros",
       awayTeam: "Texas Rangers",
@@ -150,6 +163,7 @@ const teams = [
           "Jose Altuve cleared the bases with a no-doubt grand slam to left-center, turning a one-run deficit into a three-run lead against the Rangers' bullpen.",
         player: "Jose Altuve",
         timestamp: "5th inning",
+        imageUrl: "https://picsum.photos/seed/baseball-homer/800/500",
       },
       {
         title: "Valdez Cruises Through 7 Innings",
@@ -157,6 +171,7 @@ const teams = [
           "Framber Valdez held Texas to two runs on five hits across seven dominant innings, striking out nine and walking just one.",
         player: "Framber Valdez",
         timestamp: "7 IP",
+        imageUrl: "https://picsum.photos/seed/baseball-pitcher/800/500",
       },
     ],
     tradeNews: [
@@ -167,6 +182,7 @@ const teams = [
         player: "Hunter Renfroe",
         date: "May 30, 2026",
         type: "SIGNING",
+        imageUrl: "https://picsum.photos/seed/mlb-signing/800/500",
       },
       {
         headline: "Verlander on 15-Day IL",
@@ -175,6 +191,7 @@ const teams = [
         player: "Justin Verlander",
         date: "May 27, 2026",
         type: "INJURY",
+        imageUrl: "https://picsum.photos/seed/mlb-injury/800/500",
       },
       {
         headline: "Astros Reportedly Pursuing SP Depth",
@@ -183,6 +200,7 @@ const teams = [
         player: "Multiple",
         date: "May 26, 2026",
         type: "TRADE",
+        imageUrl: "https://picsum.photos/seed/mlb-trade/800/500",
       },
     ],
   },

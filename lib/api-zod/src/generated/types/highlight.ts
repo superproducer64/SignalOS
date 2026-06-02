@@ -11,4 +11,5 @@ export interface Highlight {
   description: string;
   player: string;
   timestamp: string;
+  imageUrl?: string | null;
 }

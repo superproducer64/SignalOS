@@ -114,6 +114,9 @@ components:
           type: string
         timestamp:
           type: string
+        imageUrl:
+          type: string
+          nullable: true
       required:
         - title
         - description
@@ -133,6 +136,9 @@ components:
         type:
           type: string
           description: "e.g. TRADE, SIGNING, RELEASE, INJURY"
+        imageUrl:
+          type: string
+          nullable: true
       required:
         - headline
         - summary
@@ -156,6 +162,9 @@ components:
           type: string
         secondaryColor:
           type: string
+        imageUrl:
+          type: string
+          nullable: true
         score:
           $ref: "#/components/schemas/Score"
         highlights:

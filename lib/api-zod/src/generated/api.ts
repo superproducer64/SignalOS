@@ -29,6 +29,7 @@ export const GetTeamsResponseItem = zod.object({
   "sport": zod.string(),
   "primaryColor": zod.string(),
   "secondaryColor": zod.string(),
+  "imageUrl": zod.string().nullish(),
   "score": zod.object({
   "homeTeam": zod.string(),
   "awayTeam": zod.string(),
@@ -43,14 +44,16 @@ export const GetTeamsResponseItem = zod.object({
   "title": zod.string(),
   "description": zod.string(),
   "player": zod.string(),
-  "timestamp": zod.string()
+  "timestamp": zod.string(),
+  "imageUrl": zod.string().nullish()
 })),
   "tradeNews": zod.array(zod.object({
   "headline": zod.string(),
   "summary": zod.string(),
   "player": zod.string(),
   "date": zod.string(),
-  "type": zod.string().describe('e.g. TRADE, SIGNING, RELEASE, INJURY')
+  "type": zod.string().describe('e.g. TRADE, SIGNING, RELEASE, INJURY'),
+  "imageUrl": zod.string().nullish()
 }))
 })
 export const GetTeamsResponse = zod.array(GetTeamsResponseItem)
@@ -71,6 +74,7 @@ export const GetTeamResponse = zod.object({
   "sport": zod.string(),
   "primaryColor": zod.string(),
   "secondaryColor": zod.string(),
+  "imageUrl": zod.string().nullish(),
   "score": zod.object({
   "homeTeam": zod.string(),
   "awayTeam": zod.string(),
@@ -85,14 +89,16 @@ export const GetTeamResponse = zod.object({
   "title": zod.string(),
   "description": zod.string(),
   "player": zod.string(),
-  "timestamp": zod.string()
+  "timestamp": zod.string(),
+  "imageUrl": zod.string().nullish()
 })),
   "tradeNews": zod.array(zod.object({
   "headline": zod.string(),
   "summary": zod.string(),
   "player": zod.string(),
   "date": zod.string(),
-  "type": zod.string().describe('e.g. TRADE, SIGNING, RELEASE, INJURY')
+  "type": zod.string().describe('e.g. TRADE, SIGNING, RELEASE, INJURY'),
+  "imageUrl": zod.string().nullish()
 }))
 })
 

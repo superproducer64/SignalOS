@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useGetTeams } from "@workspace/api-client-react";
+import { useGetTeams, TeamCard } from "@workspace/api-client-react";
 import { StoryCard, teamToStories, type Story } from "@/components/StoryCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, X, Bookmark } from "lucide-react";
@@ -13,6 +13,71 @@ function teamHeroStory(stories: Story[]): Story | null {
     stories.find((s) => s.type === "SCORE") ??
     stories[0] ??
     null
+  );
+}
+
+/** Single team highlight tile — owns its own image-error state */
+function TeamHighlightTile({
+  team,
+  story,
+  saved,
+}: {
+  team: TeamCard;
+  story: Story | null;
+  saved: boolean;
+}) {
+  const [imgError, setImgError] = useState(false);
+  const showPhoto = !!team.imageUrl && !imgError;
+
+  return (
+    <Link
+      href={`/team/${team.id}`}
+      className="no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl"
+      data-testid={`block-team-${team.id}`}
+    >
+      <div
+        className="relative overflow-hidden rounded-xl h-[140px] flex flex-col justify-end cursor-pointer transition-transform duration-150 active:scale-95 hover:opacity-90"
+        style={
+          !showPhoto
+            ? {
+                background: `linear-gradient(160deg, ${team.secondaryColor}cc 0%, ${team.primaryColor}ee 100%)`,
+              }
+            : undefined
+        }
+      >
+        {/* Real photo */}
+        {showPhoto && (
+          <img
+            src={team.imageUrl!}
+            alt={team.name}
+            onError={() => setImgError(true)}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        )}
+
+        {/* Gradient overlay for readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+
+        {/* Bookmark indicator */}
+        {saved && (
+          <div className="absolute top-2 right-2 z-10">
+            <Bookmark className="w-3.5 h-3.5" style={{ fill: "#fff", color: "#fff" }} />
+          </div>
+        )}
+
+        {/* Content */}
+        <div className="relative z-10 p-2.5">
+          <div className="text-[8px] font-black uppercase tracking-widest mb-0.5 text-white/80">
+            {team.name}
+          </div>
+          {story && (
+            <p className="text-white text-[10px] font-bold leading-tight line-clamp-3">
+              {story.headline}
+            </p>
+          )}
+        </div>
+      </div>
+    </Link>
   );
 }
 
@@ -37,17 +102,10 @@ export default function Home() {
   }
 
   // Per-team highlight stories for the 3-block strip
-  const teamHighlights: { teamId: string; primaryColor: string; secondaryColor: string; name: string; story: Story | null }[] =
-    teams?.map((team) => {
-      const stories = teamToStories(team, new Set());
-      return {
-        teamId: team.id,
-        primaryColor: team.primaryColor,
-        secondaryColor: team.secondaryColor,
-        name: team.name,
-        story: teamHeroStory(stories),
-      };
-    }) ?? [];
+  const teamHighlights = (teams ?? []).map((team) => {
+    const stories = teamToStories(team, new Set());
+    return { team, story: teamHeroStory(stories) };
+  });
 
   // Filter by active team tab AND search query
   const filtered = allStories.filter((s) => {
@@ -191,62 +249,13 @@ export default function Home() {
               </div>
             ) : (
               <div className="grid grid-cols-3 gap-2">
-                {teamHighlights.map(({ teamId, primaryColor, secondaryColor, name, story }) => (
-                  <Link
-                    key={teamId}
-                    href={`/team/${teamId}`}
-                    className="no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl"
-                    data-testid={`block-team-${teamId}`}
-                  >
-                    <div
-                      className="relative overflow-hidden rounded-xl h-[140px] flex flex-col justify-end cursor-pointer transition-transform duration-150 active:scale-95 hover:opacity-90"
-                      style={{
-                        background: `linear-gradient(160deg, ${secondaryColor}cc 0%, ${primaryColor}ee 100%)`,
-                      }}
-                    >
-                      {/* Diagonal stripe texture */}
-                      <div
-                        className="absolute inset-0 opacity-10"
-                        style={{
-                          backgroundImage: `repeating-linear-gradient(
-                            -45deg,
-                            transparent,
-                            transparent 6px,
-                            rgba(255,255,255,0.5) 6px,
-                            rgba(255,255,255,0.5) 7px
-                          )`,
-                        }}
-                      />
-                      {/* Team watermark */}
-                      <div className="absolute inset-0 flex items-center justify-center select-none pointer-events-none text-[42px] font-black uppercase tracking-tighter opacity-10 text-white leading-none px-1 text-center">
-                        {name}
-                      </div>
-                      {/* Bottom gradient */}
-                      <div className="absolute bottom-0 left-0 right-0 h-2/3 bg-gradient-to-t from-black/70 to-transparent" />
-
-                      {/* Bookmark indicator */}
-                      {isSaved(teamId) && (
-                        <div className="absolute top-2 right-2">
-                          <Bookmark className="w-3.5 h-3.5" style={{ fill: "#fff", color: "#fff" }} />
-                        </div>
-                      )}
-
-                      {/* Content */}
-                      <div className="relative z-10 p-2.5">
-                        <div
-                          className="text-[8px] font-black uppercase tracking-widest mb-0.5 opacity-90"
-                          style={{ color: primaryColor === "#FFD700" || primaryColor === "#FFC72C" ? "#fff" : "#fff" }}
-                        >
-                          {name}
-                        </div>
-                        {story && (
-                          <p className="text-white text-[10px] font-bold leading-tight line-clamp-3">
-                            {story.headline}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </Link>
+                {teamHighlights.map(({ team, story }) => (
+                  <TeamHighlightTile
+                    key={team.id}
+                    team={team}
+                    story={story}
+                    saved={isSaved(team.id)}
+                  />
                 ))}
               </div>
             )}

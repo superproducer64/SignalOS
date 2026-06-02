@@ -17,6 +17,7 @@ export interface TeamCard {
   sport: string;
   primaryColor: string;
   secondaryColor: string;
+  imageUrl?: string | null;
   score: Score;
   highlights: Highlight[];
   tradeNews: TradeNews[];

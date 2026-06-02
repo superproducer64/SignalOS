@@ -13,6 +13,8 @@ export type Story = {
   sport: string;
   primaryColor: string;
   secondaryColor: string;
+  teamImageUrl?: string | null;
+  imageUrl?: string | null;
   type: "SCORE" | "HIGHLIGHT" | "TRADE" | "SIGNING" | "RELEASE" | "INJURY" | "NEWS";
   headline: string;
   summary: string;
@@ -102,6 +104,9 @@ export function StoryCard({ story, hero = false }: StoryCardProps) {
   const { isSaved, toggle } = useSavedTeams();
   const saved = isSaved(story.teamId);
   const [shareOpen, setShareOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
+
+  const photoUrl = !imgError ? (story.imageUrl ?? story.teamImageUrl ?? null) : null;
 
   const handleSave = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -135,41 +140,59 @@ export function StoryCard({ story, hero = false }: StoryCardProps) {
         className={`relative overflow-hidden rounded-xl bg-card border border-border/40 shadow-lg transition-all duration-200 hover:border-border hover:shadow-xl active:scale-[0.99] ${hero ? "min-h-[340px]" : "min-h-[180px]"} flex flex-col`}
         data-testid={`card-story-${story.id}`}
       >
-        {/* Hero image area — rich gradient using team colors */}
+        {/* Hero image area */}
         <div
           className={`relative shrink-0 overflow-hidden ${hero ? "h-[220px]" : "h-[110px]"}`}
-          style={{
-            background: `linear-gradient(135deg, ${story.secondaryColor}ee 0%, ${story.primaryColor}cc 50%, ${story.secondaryColor}99 100%)`,
-          }}
+          style={
+            !photoUrl
+              ? {
+                  background: `linear-gradient(135deg, ${story.secondaryColor}ee 0%, ${story.primaryColor}cc 50%, ${story.secondaryColor}99 100%)`,
+                }
+              : undefined
+          }
         >
-          {/* Subtle diagonal stripe texture */}
-          <div
-            className="absolute inset-0 opacity-10"
-            style={{
-              backgroundImage: `repeating-linear-gradient(
-                -45deg,
-                transparent,
-                transparent 8px,
-                rgba(255,255,255,0.4) 8px,
-                rgba(255,255,255,0.4) 9px
-              )`,
-            }}
-          />
-          {/* Team name watermark */}
-          <div
-            className={`absolute inset-0 flex items-center justify-center select-none pointer-events-none ${hero ? "text-[88px]" : "text-[52px]"} font-black uppercase tracking-tighter opacity-10 text-white`}
-          >
-            {story.teamName}
-          </div>
-          {/* Bottom gradient fade */}
-          <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/70 to-transparent" />
+          {/* Real photo */}
+          {photoUrl && (
+            <img
+              src={photoUrl}
+              alt={story.headline}
+              onError={() => setImgError(true)}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          )}
+
+          {/* Gradient fallback texture (shown when no image) */}
+          {!photoUrl && (
+            <>
+              <div
+                className="absolute inset-0 opacity-10"
+                style={{
+                  backgroundImage: `repeating-linear-gradient(
+                    -45deg,
+                    transparent,
+                    transparent 8px,
+                    rgba(255,255,255,0.4) 8px,
+                    rgba(255,255,255,0.4) 9px
+                  )`,
+                }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center select-none pointer-events-none text-[88px] font-black uppercase tracking-tighter opacity-10 text-white">
+                {story.teamName}
+              </div>
+            </>
+          )}
+
+          {/* Bottom gradient over image for readability */}
+          <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/75 to-transparent" />
+          {/* Top vignette for action buttons */}
+          <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-black/40 to-transparent" />
 
           {/* Story type badge — bottom left */}
           <div className="absolute bottom-3 left-3 flex items-center gap-2">
             <span className={`${typeBg} text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-sm`}>
               {typeLabel}
             </span>
-            <span className="text-white/70 text-[10px] font-semibold uppercase tracking-wider bg-black/30 px-2 py-1 rounded-sm">
+            <span className="text-white/80 text-[10px] font-semibold uppercase tracking-wider bg-black/40 px-2 py-1 rounded-sm">
               {story.league}
             </span>
           </div>
@@ -245,7 +268,7 @@ export function StoryCard({ story, hero = false }: StoryCardProps) {
 }
 
 /** Flatten a team's data into a list of Story objects */
-export function teamToStories(team: TeamCard, savedTeamIds: Set<string>): Story[] {
+export function teamToStories(team: TeamCard, _savedTeamIds: Set<string>): Story[] {
   const base = {
     teamId: team.id,
     teamName: team.name,
@@ -254,11 +277,12 @@ export function teamToStories(team: TeamCard, savedTeamIds: Set<string>): Story[
     sport: team.sport,
     primaryColor: team.primaryColor,
     secondaryColor: team.secondaryColor,
+    teamImageUrl: team.imageUrl ?? null,
   };
 
   const stories: Story[] = [];
 
-  // Score story
+  // Score story — use team hero image
   stories.push({
     ...base,
     id: `${team.id}-score`,
@@ -266,6 +290,7 @@ export function teamToStories(team: TeamCard, savedTeamIds: Set<string>): Story[
     headline: `${team.score.homeTeam} ${team.score.homeScore}, ${team.score.awayTeam} ${team.score.awayScore}`,
     summary: `${team.score.status} · ${team.score.gameDate}`,
     timestamp: team.score.gameDate,
+    imageUrl: team.imageUrl ?? null,
   });
 
   // Highlights
@@ -278,6 +303,7 @@ export function teamToStories(team: TeamCard, savedTeamIds: Set<string>): Story[
       summary: hl.description,
       player: hl.player,
       timestamp: hl.timestamp,
+      imageUrl: hl.imageUrl ?? team.imageUrl ?? null,
     });
   });
 
@@ -291,6 +317,7 @@ export function teamToStories(team: TeamCard, savedTeamIds: Set<string>): Story[
       summary: news.summary,
       player: news.player !== "Multiple" ? news.player : undefined,
       timestamp: news.date,
+      imageUrl: news.imageUrl ?? team.imageUrl ?? null,
     });
   });
 

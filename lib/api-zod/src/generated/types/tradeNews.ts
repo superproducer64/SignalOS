@@ -13,4 +13,5 @@ export interface TradeNews {
   date: string;
   /** e.g. TRADE, SIGNING, RELEASE, INJURY */
   type: string;
+  imageUrl?: string | null;
 }

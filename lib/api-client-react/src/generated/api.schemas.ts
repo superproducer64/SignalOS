@@ -26,6 +26,7 @@ export interface Highlight {
   description: string;
   player: string;
   timestamp: string;
+  imageUrl?: string | null;
 }
 
 export interface TradeNews {
@@ -35,6 +36,7 @@ export interface TradeNews {
   date: string;
   /** e.g. TRADE, SIGNING, RELEASE, INJURY */
   type: string;
+  imageUrl?: string | null;
 }
 
 export interface TeamCard {
@@ -45,6 +47,7 @@ export interface TeamCard {
   sport: string;
   primaryColor: string;
   secondaryColor: string;
+  imageUrl?: string | null;
   score: Score;
   highlights: Highlight[];
   tradeNews: TradeNews[];
