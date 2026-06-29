@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "fu8O-qOa7w41wWlH8Qzzl"
+uri = "file://docs/onboarding-data-model-fix.md"
+type = "text"
+title = "Onboarding Data Model Fix"
