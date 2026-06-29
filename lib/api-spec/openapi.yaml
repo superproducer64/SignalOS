@@ -75,76 +75,99 @@ components:
       required:
         - status
     Score:
+      allOf:
+        - $ref: "#/components/schemas/SignalScoreFields"
+        - type: object
+          properties:
+            homeTeam:
+              type: string
+            awayTeam:
+              type: string
+            homeScore:
+              type: integer
+            awayScore:
+              type: integer
+            status:
+              type: string
+              description: "e.g. FINAL, IN PROGRESS, UPCOMING"
+            gameDate:
+              type: string
+            quarter:
+              type: string
+              nullable: true
+            timeRemaining:
+              type: string
+              nullable: true
+          required:
+            - homeTeam
+            - awayTeam
+            - homeScore
+            - awayScore
+            - status
+            - gameDate
+    SignalScoreFields:
       type: object
+      description: Signal scoring fields added to every story object
       properties:
-        homeTeam:
-          type: string
-        awayTeam:
-          type: string
-        homeScore:
+        signalScore:
           type: integer
-        awayScore:
-          type: integer
-        status:
-          type: string
-          description: "e.g. FINAL, IN PROGRESS, UPCOMING"
-        gameDate:
-          type: string
-        quarter:
-          type: string
-          nullable: true
-        timeRemaining:
-          type: string
-          nullable: true
+          minimum: 0
+          maximum: 100
+          description: Relevance score 0-100 based on user preferences and recency
+        reasons:
+          type: array
+          items:
+            type: string
+          description: Human-readable list of factors that contributed to the score (e.g. "Favorite Team +40")
       required:
-        - homeTeam
-        - awayTeam
-        - homeScore
-        - awayScore
-        - status
-        - gameDate
+        - signalScore
+        - reasons
     Highlight:
-      type: object
-      properties:
-        title:
-          type: string
-        description:
-          type: string
-        player:
-          type: string
-        timestamp:
-          type: string
-        imageUrl:
-          type: string
-          nullable: true
-      required:
-        - title
-        - description
-        - player
-        - timestamp
+      allOf:
+        - $ref: "#/components/schemas/SignalScoreFields"
+        - type: object
+          properties:
+            title:
+              type: string
+            description:
+              type: string
+            player:
+              type: string
+            timestamp:
+              type: string
+            imageUrl:
+              type: string
+              nullable: true
+          required:
+            - title
+            - description
+            - player
+            - timestamp
     TradeNews:
-      type: object
-      properties:
-        headline:
-          type: string
-        summary:
-          type: string
-        player:
-          type: string
-        date:
-          type: string
-        type:
-          type: string
-          description: "e.g. TRADE, SIGNING, RELEASE, INJURY"
-        imageUrl:
-          type: string
-          nullable: true
-      required:
-        - headline
-        - summary
-        - player
-        - date
-        - type
+      allOf:
+        - $ref: "#/components/schemas/SignalScoreFields"
+        - type: object
+          properties:
+            headline:
+              type: string
+            summary:
+              type: string
+            player:
+              type: string
+            date:
+              type: string
+            type:
+              type: string
+              description: "e.g. TRADE, SIGNING, RELEASE, INJURY"
+            imageUrl:
+              type: string
+              nullable: true
+          required:
+            - headline
+            - summary
+            - player
+            - date
+            - type
     TeamCard:
       type: object
       properties:

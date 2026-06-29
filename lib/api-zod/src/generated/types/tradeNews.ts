@@ -5,8 +5,9 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { SignalScoreFields } from './signalScoreFields';
 
-export interface TradeNews {
+export type TradeNews = SignalScoreFields & ({
   headline: string;
   summary: string;
   player: string;
@@ -14,4 +15,4 @@ export interface TradeNews {
   /** e.g. TRADE, SIGNING, RELEASE, INJURY */
   type: string;
   imageUrl?: string | null;
-}
+});

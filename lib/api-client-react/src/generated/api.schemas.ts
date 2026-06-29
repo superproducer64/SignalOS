@@ -9,7 +9,21 @@ export interface HealthStatus {
   status: string;
 }
 
-export interface Score {
+/**
+ * Signal scoring fields added to every story object
+ */
+export interface SignalScoreFields {
+  /**
+     * Relevance score 0-100 based on user preferences and recency
+     * @minimum 0
+     * @maximum 100
+     */
+  signalScore: number;
+  /** Human-readable list of factors that contributed to the score (e.g. "Favorite Team +40") */
+  reasons: string[];
+}
+
+export type Score = SignalScoreFields & ({
   homeTeam: string;
   awayTeam: string;
   homeScore: number;
@@ -19,17 +33,17 @@ export interface Score {
   gameDate: string;
   quarter?: string | null;
   timeRemaining?: string | null;
-}
+});
 
-export interface Highlight {
+export type Highlight = SignalScoreFields & ({
   title: string;
   description: string;
   player: string;
   timestamp: string;
   imageUrl?: string | null;
-}
+});
 
-export interface TradeNews {
+export type TradeNews = SignalScoreFields & ({
   headline: string;
   summary: string;
   player: string;
@@ -37,7 +51,7 @@ export interface TradeNews {
   /** e.g. TRADE, SIGNING, RELEASE, INJURY */
   type: string;
   imageUrl?: string | null;
-}
+});
 
 export interface TeamCard {
   id: string;

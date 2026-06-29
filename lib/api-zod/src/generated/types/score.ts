@@ -5,8 +5,9 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { SignalScoreFields } from './signalScoreFields';
 
-export interface Score {
+export type Score = SignalScoreFields & ({
   homeTeam: string;
   awayTeam: string;
   homeScore: number;
@@ -16,4 +17,4 @@ export interface Score {
   gameDate: string;
   quarter?: string | null;
   timeRemaining?: string | null;
-}
+});

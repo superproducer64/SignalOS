@@ -21,6 +21,17 @@ export const HealthCheckResponse = zod.object({
  * Returns all sports team cards with score, highlight, and trade news
  * @summary Get all teams
  */
+export const getTeamsResponseScoreOneSignalScoreMin = 0;
+export const getTeamsResponseScoreOneSignalScoreMax = 100;
+
+export const getTeamsResponseHighlightsItemOneSignalScoreMin = 0;
+export const getTeamsResponseHighlightsItemOneSignalScoreMax = 100;
+
+export const getTeamsResponseTradeNewsItemOneSignalScoreMin = 0;
+export const getTeamsResponseTradeNewsItemOneSignalScoreMax = 100;
+
+
+
 export const GetTeamsResponseItem = zod.object({
   "id": zod.string(),
   "name": zod.string(),
@@ -31,6 +42,9 @@ export const GetTeamsResponseItem = zod.object({
   "secondaryColor": zod.string(),
   "imageUrl": zod.string().nullish(),
   "score": zod.object({
+  "signalScore": zod.number().min(getTeamsResponseScoreOneSignalScoreMin).max(getTeamsResponseScoreOneSignalScoreMax).describe('Relevance score 0-100 based on user preferences and recency'),
+  "reasons": zod.array(zod.string()).describe('Human-readable list of factors that contributed to the score (e.g. \"Favorite Team +40\")')
+}).describe('Signal scoring fields added to every story object').and(zod.object({
   "homeTeam": zod.string(),
   "awayTeam": zod.string(),
   "homeScore": zod.number(),
@@ -39,22 +53,28 @@ export const GetTeamsResponseItem = zod.object({
   "gameDate": zod.string(),
   "quarter": zod.string().nullish(),
   "timeRemaining": zod.string().nullish()
-}),
+})),
   "highlights": zod.array(zod.object({
+  "signalScore": zod.number().min(getTeamsResponseHighlightsItemOneSignalScoreMin).max(getTeamsResponseHighlightsItemOneSignalScoreMax).describe('Relevance score 0-100 based on user preferences and recency'),
+  "reasons": zod.array(zod.string()).describe('Human-readable list of factors that contributed to the score (e.g. \"Favorite Team +40\")')
+}).describe('Signal scoring fields added to every story object').and(zod.object({
   "title": zod.string(),
   "description": zod.string(),
   "player": zod.string(),
   "timestamp": zod.string(),
   "imageUrl": zod.string().nullish()
-})),
+}))),
   "tradeNews": zod.array(zod.object({
+  "signalScore": zod.number().min(getTeamsResponseTradeNewsItemOneSignalScoreMin).max(getTeamsResponseTradeNewsItemOneSignalScoreMax).describe('Relevance score 0-100 based on user preferences and recency'),
+  "reasons": zod.array(zod.string()).describe('Human-readable list of factors that contributed to the score (e.g. \"Favorite Team +40\")')
+}).describe('Signal scoring fields added to every story object').and(zod.object({
   "headline": zod.string(),
   "summary": zod.string(),
   "player": zod.string(),
   "date": zod.string(),
   "type": zod.string().describe('e.g. TRADE, SIGNING, RELEASE, INJURY'),
   "imageUrl": zod.string().nullish()
-}))
+})))
 })
 export const GetTeamsResponse = zod.array(GetTeamsResponseItem)
 
@@ -66,6 +86,17 @@ export const GetTeamParams = zod.object({
   "teamId": zod.coerce.string()
 })
 
+export const getTeamResponseScoreOneSignalScoreMin = 0;
+export const getTeamResponseScoreOneSignalScoreMax = 100;
+
+export const getTeamResponseHighlightsItemOneSignalScoreMin = 0;
+export const getTeamResponseHighlightsItemOneSignalScoreMax = 100;
+
+export const getTeamResponseTradeNewsItemOneSignalScoreMin = 0;
+export const getTeamResponseTradeNewsItemOneSignalScoreMax = 100;
+
+
+
 export const GetTeamResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
@@ -76,6 +107,9 @@ export const GetTeamResponse = zod.object({
   "secondaryColor": zod.string(),
   "imageUrl": zod.string().nullish(),
   "score": zod.object({
+  "signalScore": zod.number().min(getTeamResponseScoreOneSignalScoreMin).max(getTeamResponseScoreOneSignalScoreMax).describe('Relevance score 0-100 based on user preferences and recency'),
+  "reasons": zod.array(zod.string()).describe('Human-readable list of factors that contributed to the score (e.g. \"Favorite Team +40\")')
+}).describe('Signal scoring fields added to every story object').and(zod.object({
   "homeTeam": zod.string(),
   "awayTeam": zod.string(),
   "homeScore": zod.number(),
@@ -84,22 +118,28 @@ export const GetTeamResponse = zod.object({
   "gameDate": zod.string(),
   "quarter": zod.string().nullish(),
   "timeRemaining": zod.string().nullish()
-}),
+})),
   "highlights": zod.array(zod.object({
+  "signalScore": zod.number().min(getTeamResponseHighlightsItemOneSignalScoreMin).max(getTeamResponseHighlightsItemOneSignalScoreMax).describe('Relevance score 0-100 based on user preferences and recency'),
+  "reasons": zod.array(zod.string()).describe('Human-readable list of factors that contributed to the score (e.g. \"Favorite Team +40\")')
+}).describe('Signal scoring fields added to every story object').and(zod.object({
   "title": zod.string(),
   "description": zod.string(),
   "player": zod.string(),
   "timestamp": zod.string(),
   "imageUrl": zod.string().nullish()
-})),
+}))),
   "tradeNews": zod.array(zod.object({
+  "signalScore": zod.number().min(getTeamResponseTradeNewsItemOneSignalScoreMin).max(getTeamResponseTradeNewsItemOneSignalScoreMax).describe('Relevance score 0-100 based on user preferences and recency'),
+  "reasons": zod.array(zod.string()).describe('Human-readable list of factors that contributed to the score (e.g. \"Favorite Team +40\")')
+}).describe('Signal scoring fields added to every story object').and(zod.object({
   "headline": zod.string(),
   "summary": zod.string(),
   "player": zod.string(),
   "date": zod.string(),
   "type": zod.string().describe('e.g. TRADE, SIGNING, RELEASE, INJURY'),
   "imageUrl": zod.string().nullish()
-}))
+})))
 })
 
 

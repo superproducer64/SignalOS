@@ -5,11 +5,12 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { SignalScoreFields } from './signalScoreFields';
 
-export interface Highlight {
+export type Highlight = SignalScoreFields & ({
   title: string;
   description: string;
   player: string;
   timestamp: string;
   imageUrl?: string | null;
-}
+});

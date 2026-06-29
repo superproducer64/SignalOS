@@ -10,5 +10,6 @@ export * from './errorResponse';
 export * from './healthStatus';
 export * from './highlight';
 export * from './score';
+export * from './signalScoreFields';
 export * from './teamCard';
 export * from './tradeNews';

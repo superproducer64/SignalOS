@@ -1,4 +1,5 @@
-import { Router } from "express";
+import { Router, Request } from "express";
+import { calculateSignalScore, UserPrefs } from "../lib/signal-score";
 
 const router = Router();
 
@@ -206,8 +207,59 @@ const teams = [
   },
 ];
 
-router.get("/teams", (_req, res) => {
-  res.json(teams);
+/** Parse UserPrefs from query params. All params are optional. */
+function parseUserPrefs(req: Request): UserPrefs {
+  const csv = (val: unknown): string[] =>
+    typeof val === "string" && val.trim()
+      ? val.split(",").map((s) => s.trim()).filter(Boolean)
+      : [];
+
+  return {
+    favoriteTeamIds: csv(req.query.favoriteTeams),
+    likedCategories: csv(req.query.likedCategories),
+    likedStoryIds: csv(req.query.likedStoryIds),
+  };
+}
+
+/** Attach signalScore + reasons to every story object within a team. */
+function scoreTeam(team: (typeof teams)[0], prefs: UserPrefs) {
+  const base = { teamId: team.id };
+
+  const scoredScore = {
+    ...team.score,
+    ...calculateSignalScore(
+      { id: `${team.id}-score`, type: "SCORE", dateStr: team.score.gameDate, ...base },
+      prefs
+    ),
+  };
+
+  const scoredHighlights = team.highlights.map((hl, i) => ({
+    ...hl,
+    ...calculateSignalScore(
+      { id: `${team.id}-hl-${i}`, type: "HIGHLIGHT", dateStr: hl.timestamp, ...base },
+      prefs
+    ),
+  }));
+
+  const scoredTradeNews = team.tradeNews.map((news, i) => ({
+    ...news,
+    ...calculateSignalScore(
+      { id: `${team.id}-news-${i}`, type: news.type, dateStr: news.date, ...base },
+      prefs
+    ),
+  }));
+
+  return {
+    ...team,
+    score: scoredScore,
+    highlights: scoredHighlights,
+    tradeNews: scoredTradeNews,
+  };
+}
+
+router.get("/teams", (req, res) => {
+  const prefs = parseUserPrefs(req);
+  res.json(teams.map((t) => scoreTeam(t, prefs)));
 });
 
 router.get("/teams/:teamId", (req, res) => {
@@ -215,7 +267,8 @@ router.get("/teams/:teamId", (req, res) => {
   if (!team) {
     return res.status(404).json({ message: "Team not found" });
   }
-  return res.json(team);
+  const prefs = parseUserPrefs(req);
+  return res.json(scoreTeam(team, prefs));
 });
 
 export default router;
