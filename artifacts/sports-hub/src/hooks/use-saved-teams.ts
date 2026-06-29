@@ -40,6 +40,7 @@ export function useSavedTeams() {
   };
 
   const isSaved = (teamId: string) => saved.has(teamId);
+  const savedIds = [...saved];
 
-  return { isSaved, toggle };
+  return { isSaved, toggle, savedIds };
 }

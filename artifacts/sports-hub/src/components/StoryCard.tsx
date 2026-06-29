@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Bookmark, Share2, MessageSquare, Mail, X as XIcon } from "lucide-react";
+import { Bookmark, Share2, MessageSquare, Mail, X as XIcon, Info } from "lucide-react";
 import { TeamCard } from "@workspace/api-client-react";
 import { useSavedTeams } from "@/hooks/use-saved-teams";
 import { useState, useRef, useEffect } from "react";
@@ -20,6 +20,8 @@ export type Story = {
   summary: string;
   player?: string;
   timestamp: string;
+  signalScore?: number;
+  reasons?: string[];
 };
 
 function buildShareText(story: Story): string {
@@ -95,6 +97,85 @@ function ShareMenu({ story, onClose }: { story: Story; onClose: () => void }) {
   );
 }
 
+function SignalPanel({
+  signalScore,
+  reasons,
+  onClose,
+}: {
+  signalScore: number;
+  reasons: string[];
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [onClose]);
+
+  return (
+    <div
+      ref={ref}
+      className="absolute right-0 top-9 z-50 w-[230px] rounded-xl border border-border bg-card shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
+        <span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
+          Why am I seeing this?
+        </span>
+        <button
+          onClick={onClose}
+          className="text-muted-foreground hover:text-foreground transition-colors"
+          type="button"
+          aria-label="Close"
+        >
+          <XIcon className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      <div className="px-3 pt-3 pb-2">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+            Relevance Score
+          </span>
+          <span className="text-[13px] font-black text-foreground tabular-nums">
+            {signalScore}<span className="text-[10px] text-muted-foreground font-semibold">/100</span>
+          </span>
+        </div>
+        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full bg-primary transition-all duration-500"
+            style={{ width: `${signalScore}%` }}
+          />
+        </div>
+      </div>
+
+      <div className="px-3 pb-3 flex flex-col gap-1.5">
+        {reasons.map((reason, i) => {
+          const match = reason.match(/([+-]\d+)$/);
+          const pts = match ? parseInt(match[1]) : 0;
+          const label = reason.replace(/\s*[+-]\d+$/, "");
+          return (
+            <div key={i} className="flex items-center justify-between gap-2">
+              <span className="text-[11px] text-foreground/75 leading-tight">{label}</span>
+              <span
+                className={`text-[11px] font-bold tabular-nums shrink-0 ${
+                  pts >= 0 ? "text-emerald-400" : "text-red-400"
+                }`}
+              >
+                {pts >= 0 ? "+" : ""}
+                {pts}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 interface StoryCardProps {
   story: Story;
   hero?: boolean;
@@ -104,6 +185,7 @@ export function StoryCard({ story, hero = false }: StoryCardProps) {
   const { isSaved, toggle } = useSavedTeams();
   const saved = isSaved(story.teamId);
   const [shareOpen, setShareOpen] = useState(false);
+  const [signalOpen, setSignalOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
 
   const photoUrl = !imgError ? (story.imageUrl ?? story.teamImageUrl ?? null) : null;
@@ -199,6 +281,27 @@ export function StoryCard({ story, hero = false }: StoryCardProps) {
 
           {/* Action buttons — top right */}
           <div className="absolute top-3 right-3 flex items-center gap-1 z-10">
+            {story.signalScore !== undefined && story.reasons && (
+              <div className="relative">
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSignalOpen((v) => !v); }}
+                  data-testid={`button-signal-${story.id}`}
+                  type="button"
+                  aria-label="Why am I seeing this?"
+                  className="p-2 rounded-full bg-black/40 hover:bg-black/60 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary backdrop-blur-sm"
+                >
+                  <Info className="w-4 h-4 text-white/80" />
+                </button>
+                {signalOpen && (
+                  <SignalPanel
+                    signalScore={story.signalScore}
+                    reasons={story.reasons}
+                    onClose={() => setSignalOpen(false)}
+                  />
+                )}
+              </div>
+            )}
+
             <button
               onClick={handleSave}
               data-testid={`button-save-${story.id}`}
@@ -291,6 +394,8 @@ export function teamToStories(team: TeamCard, _savedTeamIds: Set<string>): Story
     summary: `${team.score.status} · ${team.score.gameDate}`,
     timestamp: team.score.gameDate,
     imageUrl: team.imageUrl ?? null,
+    signalScore: team.score.signalScore,
+    reasons: team.score.reasons,
   });
 
   // Highlights
@@ -304,6 +409,8 @@ export function teamToStories(team: TeamCard, _savedTeamIds: Set<string>): Story
       player: hl.player,
       timestamp: hl.timestamp,
       imageUrl: hl.imageUrl ?? team.imageUrl ?? null,
+      signalScore: hl.signalScore,
+      reasons: hl.reasons,
     });
   });
 
@@ -318,6 +425,8 @@ export function teamToStories(team: TeamCard, _savedTeamIds: Set<string>): Story
       player: news.player !== "Multiple" ? news.player : undefined,
       timestamp: news.date,
       imageUrl: news.imageUrl ?? team.imageUrl ?? null,
+      signalScore: news.signalScore,
+      reasons: news.reasons,
     });
   });
 

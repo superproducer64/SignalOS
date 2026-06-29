@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useGetTeams, TeamCard } from "@workspace/api-client-react";
+import { useQuery } from "@tanstack/react-query";
+import type { TeamCard } from "@workspace/api-client-react";
 import { StoryCard, teamToStories, type Story } from "@/components/StoryCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, X, Bookmark } from "lucide-react";
@@ -82,8 +83,18 @@ function TeamHighlightTile({
 }
 
 export default function Home() {
-  const { data: teams, isLoading } = useGetTeams();
-  const { isSaved } = useSavedTeams();
+  const { isSaved, savedIds } = useSavedTeams();
+  const favoriteTeamsParam = savedIds.length
+    ? `?favoriteTeams=${savedIds.join(",")}`
+    : "";
+  const { data: teams, isLoading } = useQuery<TeamCard[]>({
+    queryKey: ["/api/teams", savedIds],
+    queryFn: async () => {
+      const res = await fetch(`/api/teams${favoriteTeamsParam}`);
+      if (!res.ok) throw new Error("Failed to fetch teams");
+      return res.json() as Promise<TeamCard[]>;
+    },
+  });
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeTeamId, setActiveTeamId] = useState<string | null>(null);
