@@ -9,7 +9,11 @@
       "Bash(timeout 180 pnpm run typecheck)",
       "Bash(timeout 120 tsc -p tsconfig.json --noEmit)",
       "Bash(tsc -p tsconfig.json --noEmit)",
-      "Bash(pnpm run *)"
+      "Bash(pnpm run *)",
+      "Bash(pnpm --filter api-server run typecheck)",
+      "Bash(mkdir -p /tmp/claude-1000/-home-runner-workspace/ea8d856c-b25b-4ad0-8337-c0bcbb3efd03/scratchpad)",
+      "Bash(python3 -c ' *)",
+      "Bash(node -e ' *)"
     ]
   }
 }
