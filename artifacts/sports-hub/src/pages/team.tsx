@@ -13,8 +13,13 @@ export default function Team() {
     <div className="min-h-[100dvh] bg-background text-foreground pb-8">
       <header className="sticky top-0 z-10 bg-background/90 backdrop-blur-md border-b border-border/50 px-4 py-4 shadow-sm">
         <div className="flex items-center gap-2 max-w-md mx-auto">
-          <Link href="/" className="mr-2 p-1 hover:bg-white/10 rounded-full transition-colors text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary" data-testid="link-back">
-            <ChevronLeft className="w-5 h-5" />
+          <Link
+            href="/"
+            data-testid="link-back"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-foreground text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back
           </Link>
           <h1 className="text-lg font-black tracking-tight uppercase line-clamp-1">{team ? team.name : "Team"}</h1>
         </div>

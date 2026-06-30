@@ -1,4 +1,5 @@
-import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
+import { useState } from "react";
+import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,19 +11,12 @@ import Onboarding from "@/pages/onboarding";
 const queryClient = new QueryClient();
 
 function Router() {
-  const [, navigate] = useLocation();
-  const isOnboarded = !!localStorage.getItem("signalos_onboarding_complete");
+  const [onboarded, setOnboarded] = useState(
+    !!localStorage.getItem("signalos_onboarding_complete")
+  );
 
-  if (!isOnboarded) {
-    return (
-      <Onboarding
-        onComplete={() => {
-          // Force a re-render by navigating — queryClient stays warm
-          navigate("/");
-          window.location.reload();
-        }}
-      />
-    );
+  if (!onboarded) {
+    return <Onboarding onComplete={() => setOnboarded(true)} />;
   }
 
   return (
