@@ -55,6 +55,24 @@ export const SOURCES: SourceConfig[] = [
     category: "ANALYSIS",
     active: true,
   },
+  {
+    sourceId: "investing-com-news",
+    domain: "finance",
+    sourceName: "Investing.com",
+    sourceType: "rss",
+    endpointUrl: "https://www.investing.com/rss/news.rss",
+    category: "NEWS",
+    active: true,
+  },
+  {
+    sourceId: "marketwatch",
+    domain: "finance",
+    sourceName: "MarketWatch",
+    sourceType: "rss",
+    endpointUrl: "https://feeds.content.dowjones.io/public/rss/mw_topstories",
+    category: "ANALYSIS",
+    active: true,
+  },
 ];
 
 export function getActiveSources(): SourceConfig[] {

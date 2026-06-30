@@ -13,7 +13,14 @@
       "Bash(pnpm --filter api-server run typecheck)",
       "Bash(mkdir -p /tmp/claude-1000/-home-runner-workspace/ea8d856c-b25b-4ad0-8337-c0bcbb3efd03/scratchpad)",
       "Bash(python3 -c ' *)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(node *)",
+      "Bash(pnpm exec *)",
+      "Bash(./scripts/node_modules/.bin/tsx *)",
+      "Bash(pnpm --filter api-server run build)",
+      "Bash(pnpm --filter sports-hub run typecheck)",
+      "Bash(pnpm --filter sports-hub run build)",
+      "Bash(git stash *)"
     ]
   }
 }
