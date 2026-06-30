@@ -33,12 +33,23 @@ router.get("/user/:userId", async (req, res) => {
       v.startsWith("sports:")
     );
 
+    // Derive signal domains from non-sports interests (e.g. "technology:AI" → "technology")
+    const signalDomains = [
+      ...new Set(
+        interestValues
+          .filter((v: string) => !v.startsWith("sports:"))
+          .map((v: string) => v.split(":")[0])
+          .filter(Boolean)
+      ),
+    ];
+
     return res.json({
       userId: (user as { user_id: string }).user_id,
       name: (user as { name: string }).name,
       email: (user as { email: string }).email,
       interests: interestValues,
       hasSportsInterest,
+      signalDomains,
     });
   } catch (err) {
     return res.status(500).json({ message: (err as Error).message });

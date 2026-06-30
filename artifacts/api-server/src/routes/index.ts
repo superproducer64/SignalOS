@@ -4,6 +4,7 @@ import teamsRouter from "./teams";
 import onboardingRouter from "./onboarding";
 import userRouter from "./user";
 import collectRouter from "./collect";
+import signalsRouter from "./signals";
 
 const router: IRouter = Router();
 
@@ -12,5 +13,6 @@ router.use(teamsRouter);
 router.use(onboardingRouter);
 router.use(userRouter);
 router.use(collectRouter);
+router.use(signalsRouter);
 
 export default router;

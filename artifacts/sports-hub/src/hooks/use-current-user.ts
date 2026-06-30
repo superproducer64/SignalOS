@@ -6,6 +6,8 @@ export interface CurrentUser {
   email: string;
   interests: string[];
   hasSportsInterest: boolean;
+  /** Non-sports domain prefixes derived from interests, e.g. ["technology", "lifestyle"] */
+  signalDomains: string[];
 }
 
 function getStoredUserId(): string | null {

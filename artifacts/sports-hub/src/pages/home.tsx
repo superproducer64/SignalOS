@@ -2,10 +2,12 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { TeamCard } from "@workspace/api-client-react";
 import { StoryCard, teamToStories, type Story } from "@/components/StoryCard";
+import { SignalCard } from "@/components/SignalCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, X, Bookmark, Zap } from "lucide-react";
 import { useSavedTeams } from "@/hooks/use-saved-teams";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useSignalFeed } from "@/hooks/use-signal-feed";
 import { Link } from "wouter";
 
 /** Pick the first highlight story for a team, fall back to score */
@@ -18,7 +20,7 @@ function teamHeroStory(stories: Story[]): Story | null {
   );
 }
 
-/** Single team highlight tile — owns its own image-error state */
+/** Single team highlight tile */
 function TeamHighlightTile({
   team,
   story,
@@ -76,7 +78,7 @@ function TeamHighlightTile({
   );
 }
 
-/** Empty state shown when the user has no matching signal content yet */
+/** Empty state — only shown when user truly has no matching content */
 function EmptySignalState({ name }: { name: string | null }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
@@ -84,11 +86,48 @@ function EmptySignalState({ name }: { name: string | null }) {
         <Zap className="w-7 h-7 text-primary" />
       </div>
       <h2 className="text-lg font-black tracking-tight mb-2">
-        {name ? `${name}'s signal is just getting started.` : "Your signal is just getting started."}
+        {name
+          ? `${name}'s signal is just getting started.`
+          : "Your signal is just getting started."}
       </h2>
       <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
         As we add sources for your interests, they'll show up here. Check back soon.
       </p>
+    </div>
+  );
+}
+
+/** Section heading divider */
+function SectionLabel({
+  label,
+  color,
+  sub,
+}: {
+  label: string;
+  color?: string;
+  sub?: string;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        className="text-[11px] font-black uppercase tracking-widest"
+        style={color ? { color } : {}}
+      >
+        {label}
+      </span>
+      <div
+        className="flex-1 h-px"
+        style={
+          color
+            ? { background: `linear-gradient(to right, ${color}60, transparent)` }
+            : { background: "rgb(255 255 255 / 0.1)" }
+        }
+      />
+      {sub && (
+        <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">
+          {sub}
+        </span>
+      )}
     </div>
   );
 }
@@ -98,11 +137,12 @@ export default function Home() {
   const { isSaved, savedIds } = useSavedTeams();
 
   const hasSports = user?.hasSportsInterest ?? false;
+  const signalDomains = user?.signalDomains ?? [];
 
+  // Sports data — only fetched when user has sports interest
   const favoriteTeamsParam = savedIds.length
     ? `?favoriteTeams=${savedIds.join(",")}`
     : "";
-
   const { data: teams, isLoading: teamsLoading } = useQuery<TeamCard[]>({
     queryKey: ["/api/teams", savedIds],
     queryFn: async () => {
@@ -113,10 +153,16 @@ export default function Home() {
     enabled: hasSports,
   });
 
+  // Generic signal feed — only fetched when user has non-sports domains
+  const { signals, isLoading: signalsLoading } = useSignalFeed(
+    userLoading ? [] : signalDomains
+  );
+
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeTeamId, setActiveTeamId] = useState<string | null>(null);
 
+  // Sports story list
   const allStories: Story[] = [];
   if (teams) {
     const savedSet = new Set(teams.filter((t) => isSaved(t.id)).map((t) => t.id));
@@ -134,7 +180,7 @@ export default function Home() {
     return { team, story: teamHeroStory(stories) };
   });
 
-  const filtered = allStories.filter((s) => {
+  const filteredStories = allStories.filter((s) => {
     const matchesTeam = activeTeamId ? s.teamId === activeTeamId : true;
     if (!matchesTeam) return false;
     if (!query.trim()) return true;
@@ -148,10 +194,33 @@ export default function Home() {
     );
   });
 
+  const filteredSignals = signals.filter((s) => {
+    if (!query.trim()) return true;
+    const q = query.toLowerCase();
+    return (
+      s.headline.toLowerCase().includes(q) ||
+      s.summary.toLowerCase().includes(q) ||
+      s.source_domain.toLowerCase().includes(q) ||
+      s.category.toLowerCase().includes(q)
+    );
+  });
+
   const activeTeam = teams?.find((t) => t.id === activeTeamId);
 
   const displayName = userLoading ? null : (user?.name ?? null);
-  const isLoading = userLoading || (hasSports && teamsLoading);
+
+  // Determine overall loading state
+  const isLoading =
+    userLoading ||
+    (hasSports && teamsLoading) ||
+    (signalDomains.length > 0 && signalsLoading);
+
+  // True empty: user loaded, no sports, no signal domains, or domains loaded but 0 signals
+  const hasNoContent =
+    !userLoading &&
+    !hasSports &&
+    (signalDomains.length === 0 ||
+      (!signalsLoading && signals.length === 0));
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground pb-10">
@@ -191,7 +260,7 @@ export default function Home() {
               <input
                 autoFocus
                 type="search"
-                placeholder="Search stories, teams, players..."
+                placeholder="Search stories, signals, topics..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 data-testid="input-search"
@@ -201,7 +270,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Team filter tabs — only when user has sports interest and teams loaded */}
+        {/* Sports team filter tabs */}
         {hasSports && !teamsLoading && teams && teams.length > 0 && (
           <div className="max-w-md mx-auto px-4 pb-3">
             <div className="flex gap-2 overflow-x-auto scrollbar-none">
@@ -226,7 +295,9 @@ export default function Home() {
                     type="button"
                     data-testid={`tab-team-${team.id}`}
                     onClick={() =>
-                      setActiveTeamId((prev) => (prev === team.id ? null : team.id))
+                      setActiveTeamId((prev) =>
+                        prev === team.id ? null : team.id
+                      )
                     }
                     className="shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wide transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary border"
                     style={
@@ -265,89 +336,106 @@ export default function Home() {
         {isLoading ? (
           /* Loading skeletons */
           <div className="px-4 pt-4 flex flex-col gap-4">
-            <div className="grid grid-cols-3 gap-2">
-              <Skeleton className="h-[140px] rounded-xl" />
-              <Skeleton className="h-[140px] rounded-xl" />
-              <Skeleton className="h-[140px] rounded-xl" />
-            </div>
-            <Skeleton className="h-[340px] w-full rounded-xl" />
+            {hasSports && (
+              <div className="grid grid-cols-3 gap-2">
+                <Skeleton className="h-[140px] rounded-xl" />
+                <Skeleton className="h-[140px] rounded-xl" />
+                <Skeleton className="h-[140px] rounded-xl" />
+              </div>
+            )}
             <Skeleton className="h-[180px] w-full rounded-xl" />
+            <Skeleton className="h-[140px] w-full rounded-xl" />
+            <Skeleton className="h-[140px] w-full rounded-xl" />
           </div>
-        ) : !hasSports ? (
-          /* No sports interest — friendly empty state */
+        ) : hasNoContent ? (
           <EmptySignalState name={displayName} />
         ) : (
           <>
-            {/* ── 3-block horizontal team highlight strip ── */}
-            {!query && !activeTeamId && teamHighlights.length > 0 && (
-              <div className="px-4 pt-4 pb-1">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
-                    Team Highlights
-                  </span>
-                  <div className="flex-1 h-px bg-border/30" />
+            {/* ── Sports section ── */}
+            {hasSports && (
+              <>
+                {/* Team Highlights strip */}
+                {!query && !activeTeamId && teamHighlights.length > 0 && (
+                  <div className="px-4 pt-4 pb-1">
+                    <div className="mb-3">
+                      <SectionLabel label="Team Highlights" />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {teamHighlights.map(({ team, story }) => (
+                        <TeamHighlightTile
+                          key={team.id}
+                          team={team}
+                          story={story}
+                          saved={isSaved(team.id)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Sports story feed */}
+                <div className="px-4 pt-4 pb-2">
+                  <SectionLabel
+                    label={
+                      activeTeam
+                        ? `${activeTeam.city} ${activeTeam.name}`
+                        : "Top Stories"
+                    }
+                    color={activeTeam?.primaryColor}
+                    sub={activeTeam?.league}
+                  />
                 </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {teamHighlights.map(({ team, story }) => (
-                    <TeamHighlightTile
-                      key={team.id}
-                      team={team}
-                      story={story}
-                      saved={isSaved(team.id)}
-                    />
-                  ))}
+                <div className="px-4 pb-4 flex flex-col gap-4">
+                  {filteredStories.length > 0 ? (
+                    filteredStories.map((story, i) => (
+                      <StoryCard
+                        key={story.id}
+                        story={story}
+                        hero={i === 0 && !query}
+                      />
+                    ))
+                  ) : (
+                    <div
+                      className="text-center text-muted-foreground py-8 text-sm"
+                      data-testid="text-no-results"
+                    >
+                      {query
+                        ? `No stories match "${query}"`
+                        : "No stories for this team yet."}
+                    </div>
+                  )}
                 </div>
-              </div>
+              </>
             )}
 
-            {/* ── Section label ── */}
-            <div className="px-4 pt-4 pb-2">
-              <div className="flex items-center gap-2">
-                <span
-                  className="text-[11px] font-black uppercase tracking-widest"
-                  style={activeTeam ? { color: activeTeam.primaryColor } : {}}
-                >
-                  {activeTeam
-                    ? `${activeTeam.city} ${activeTeam.name}`
-                    : "Top Stories"}
-                </span>
-                <div
-                  className="flex-1 h-px"
-                  style={
-                    activeTeam
-                      ? { background: `linear-gradient(to right, ${activeTeam.primaryColor}60, transparent)` }
-                      : { background: "rgb(255 255 255 / 0.1)" }
-                  }
-                />
-                {activeTeam && (
-                  <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">
-                    {activeTeam.league}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* ── Story feed ── */}
-            <div className="px-4 pb-4 flex flex-col gap-4">
-              {filtered.length > 0 ? (
-                filtered.map((story, i) => (
-                  <StoryCard
-                    key={story.id}
-                    story={story}
-                    hero={i === 0 && !query}
-                  />
-                ))
-              ) : (
-                <div
-                  className="text-center text-muted-foreground py-16 text-sm"
-                  data-testid="text-no-results"
-                >
-                  {query
-                    ? `No stories match "${query}"`
-                    : "No stories for this team yet."}
+            {/* ── Generic signal feed ── */}
+            {signalDomains.length > 0 && (
+              <>
+                <div className="px-4 pt-4 pb-2">
+                  <SectionLabel label="My Signal Feed" />
                 </div>
-              )}
-            </div>
+                <div className="px-4 pb-6 flex flex-col gap-3">
+                  {filteredSignals.length > 0 ? (
+                    filteredSignals.map((signal, i) => (
+                      <SignalCard
+                        key={signal.signal_id}
+                        signal={signal}
+                        hero={i === 0 && !hasSports && !query}
+                      />
+                    ))
+                  ) : (
+                    <div
+                      className="text-center text-muted-foreground py-8 text-sm"
+                      data-testid="text-no-signals"
+                    >
+                      {query
+                        ? `No signals match "${query}"`
+                        : "No signals for your interests yet."}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </>
         )}
       </main>
