@@ -7,6 +7,7 @@ const router = Router();
  * GET /api/signals
  * Query params:
  *   domains  — comma-separated list of source_domain values (required)
+ *   userId   — when provided, also returns captured signals for this user
  *   limit    — max items to return (default 40, max 100)
  */
 router.get("/signals", async (req, res) => {
@@ -21,20 +22,31 @@ router.get("/signals", async (req, res) => {
       return res.status(400).json({ message: "domains query param is required" });
     }
 
+    const userId = (req.query.userId as string | undefined)?.trim() || undefined;
+
     const limit = Math.min(
       100,
       Math.max(1, parseInt((req.query.limit as string) ?? "40", 10) || 40)
     );
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("signals")
       .select(
-        "signal_id, source_domain, category, headline, summary, signal_score, reasons, created_at"
+        "signal_id, user_id, source_domain, category, headline, summary, signal_score, reasons, created_at"
       )
-      .in("source_domain", domains)
       .order("signal_score", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(limit);
+
+    if (userId) {
+      query = query.or(
+        `source_domain.in.(${domains.join(",")}),and(source_domain.eq.captured,user_id.eq.${userId})`
+      );
+    } else {
+      query = query.in("source_domain", domains);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
 

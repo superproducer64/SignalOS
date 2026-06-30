@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Search, X, Bookmark, Zap, Send } from "lucide-react";
 import { useSavedTeams } from "@/hooks/use-saved-teams";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { useSignalFeed, type SignalItem } from "@/hooks/use-signal-feed";
+import { useSignalFeed } from "@/hooks/use-signal-feed";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 
@@ -157,7 +157,8 @@ export default function Home() {
 
   // Generic signal feed — only fetched when user has non-sports domains
   const { signals, isLoading: signalsLoading } = useSignalFeed(
-    userLoading ? [] : signalDomains
+    userLoading ? [] : signalDomains,
+    userId ?? undefined
   );
 
   const [query, setQuery] = useState("");
@@ -167,7 +168,6 @@ export default function Home() {
   // Capture input state
   const [captureText, setCaptureText] = useState("");
   const [captureLoading, setCaptureLoading] = useState(false);
-  const [capturedSignals, setCapturedSignals] = useState<SignalItem[]>([]);
 
   async function handleCapture() {
     const text = captureText.trim();
@@ -180,12 +180,8 @@ export default function Home() {
         body: JSON.stringify({ userId, text }),
       });
       if (!res.ok) throw new Error("Failed to save signal");
-      const signal = (await res.json()) as SignalItem;
       setCaptureText("");
       toast({ title: "Saved to your signal." });
-      if (signal.signal_score > 30) {
-        setCapturedSignals((prev) => [{ ...signal, userSubmitted: true }, ...prev]);
-      }
     } catch {
       toast({ title: "Couldn't save signal", variant: "destructive" });
     } finally {
@@ -225,8 +221,7 @@ export default function Home() {
     );
   });
 
-  const allSignals = [...capturedSignals, ...signals];
-  const filteredSignals = allSignals.filter((s) => {
+  const filteredSignals = signals.filter((s) => {
     if (!query.trim()) return true;
     const q = query.toLowerCase();
     return (
@@ -477,7 +472,7 @@ export default function Home() {
                     filteredSignals.map((signal, i) => (
                       <SignalCard
                         key={signal.signal_id}
-                        signal={signal}
+                        signal={{ ...signal, userSubmitted: signal.source_domain === "captured" }}
                         hero={i === 0 && !hasSports && !query}
                       />
                     ))

@@ -4,7 +4,8 @@
       "Bash(curl *)",
       "Bash(replit --help)",
       "Bash(npx tsc *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "mcp__claude_ai_Replit__resolve_app_by_name"
     ]
   }
 }

@@ -12,14 +12,16 @@ export interface SignalItem {
   userSubmitted?: boolean;
 }
 
-export function useSignalFeed(domains: string[]) {
+export function useSignalFeed(domains: string[], userId?: string) {
   const enabled = domains.length > 0;
   const domainsKey = domains.slice().sort().join(",");
 
   const { data, isLoading } = useQuery<SignalItem[]>({
-    queryKey: ["/api/signals", domainsKey],
+    queryKey: ["/api/signals", domainsKey, userId ?? ""],
     queryFn: async () => {
-      const res = await fetch(`/api/signals?domains=${encodeURIComponent(domainsKey)}&limit=40`);
+      let url = `/api/signals?domains=${encodeURIComponent(domainsKey)}&limit=40`;
+      if (userId) url += `&userId=${encodeURIComponent(userId)}`;
+      const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch signals");
       return res.json() as Promise<SignalItem[]>;
     },
