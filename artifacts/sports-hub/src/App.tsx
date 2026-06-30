@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
+import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,8 +11,7 @@ import Onboarding from "@/pages/onboarding";
 const queryClient = new QueryClient();
 
 function Router() {
-  const [, navigate] = useLocation();
-  const [onboarded, setOnboarded] = useState(
+  const [onboarded] = useState(
     !!localStorage.getItem("signalos_onboarding_complete")
   );
 
@@ -20,8 +19,12 @@ function Router() {
     return (
       <Onboarding
         onComplete={() => {
-          navigate("/");
-          setOnboarded(true);
+          // localStorage flag is already set in handleFinish before onComplete fires.
+          // Use a real browser navigation so the URL is definitively "/" on load,
+          // regardless of whatever URL the tab was previously sitting at.
+          // replace() (not href=) so the stale pre-onboarding /team/:id URL is not
+          // left in history — otherwise browser Back could return to that card.
+          window.location.replace(import.meta.env.BASE_URL);
         }}
       />
     );

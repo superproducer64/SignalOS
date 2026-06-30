@@ -1,0 +1,1 @@
+- [Onboarding exit navigation](onboarding-navigation.md) — use window.location.replace(BASE_URL) not wouter navigate() after the onboarding gate flips; navigate() loses the URL race on re-render.
