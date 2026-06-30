@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,12 +11,20 @@ import Onboarding from "@/pages/onboarding";
 const queryClient = new QueryClient();
 
 function Router() {
+  const [, navigate] = useLocation();
   const [onboarded, setOnboarded] = useState(
     !!localStorage.getItem("signalos_onboarding_complete")
   );
 
   if (!onboarded) {
-    return <Onboarding onComplete={() => setOnboarded(true)} />;
+    return (
+      <Onboarding
+        onComplete={() => {
+          navigate("/");
+          setOnboarded(true);
+        }}
+      />
+    );
   }
 
   return (
