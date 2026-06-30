@@ -1,16 +1,20 @@
 /**
- * Signal scoring engine.
- * Scores each story 0-100 and produces a human-readable reasons[] array
- * so the frontend can display "Why am I seeing this?"
+ * Signal scoring engine — domain-agnostic.
+ * Scores each signal 0-100 and produces a human-readable reasons[] array.
  */
 
 export interface UserPrefs {
-  /** Team IDs the user has favorited (e.g. ["steelers", "rockets"]) */
-  favoriteTeamIds: string[];
-  /** Story type categories the user has previously liked/saved (e.g. ["TRADE", "INJURY"]) */
+  /**
+   * Any preference_value strings from the preferences table that should
+   * boost this signal. For sports fans these would be team IDs; for
+   * finance users these might be "finance:Stocks"; any domain works.
+   * e.g. ["steelers", "rockets", "finance:Stocks"]
+   */
+  matchedPreferenceValues: string[];
+  /** Signal categories the user has previously liked/saved (e.g. ["TRADE", "NEWS"]) */
   likedCategories: string[];
-  /** Specific story IDs the user has liked or saved */
-  likedStoryIds: string[];
+  /** Specific signal IDs the user has liked or saved */
+  likedSignalIds: string[];
 }
 
 export interface SignalResult {
@@ -19,40 +23,45 @@ export interface SignalResult {
 }
 
 /**
- * Story types considered "high-value" transaction news.
- * Trades, injuries, signings, and releases are the most actionable
- * updates for a sports fan — they change the team roster.
+ * Signal types considered high-value / actionable.
+ * Sports: TRADE, INJURY, SIGNING, RELEASE
+ * Finance: ANALYSIS (kept in the set so finance signals get the same boost)
+ * Add domain-specific types here as new verticals launch.
  */
-const TRANSACTION_TYPES = new Set(["TRADE", "INJURY", "SIGNING", "RELEASE"]);
-
-/**
- * Hardcoded trending story IDs for mock purposes.
- * In production these would come from a trending/engagement service.
- * These represent the "big play" highlight moments most likely to go viral.
- */
-const TRENDING_STORY_IDS = new Set([
-  "steelers-hl-0", // Pickett 52-yard bomb
-  "rockets-hl-0",  // Green's clutch three
-  "astros-hl-0",   // Altuve grand slam
-  "rockets-score", // Rockets win over Warriors
+const HIGH_VALUE_TYPES = new Set([
+  "TRADE",
+  "INJURY",
+  "SIGNING",
+  "RELEASE",
+  "ANALYSIS",
 ]);
 
 /**
- * Parse the various timestamp/date string formats used in the mock data.
+ * Trending signal IDs (mock). In production these come from an
+ * engagement / trending service. Kept generic — any signal ID can trend.
+ */
+const TRENDING_SIGNAL_IDS = new Set([
+  "steelers-hl-0",
+  "rockets-hl-0",
+  "astros-hl-0",
+  "rockets-score",
+]);
+
+/**
+ * Parse the various timestamp/date string formats used across all domains.
  *
  * Handles:
- *   - ISO date strings: "2026-05-28"
- *   - Long date strings: "May 28, 2026"
+ *   - ISO strings:        "2026-05-28"  /  "2026-05-28T14:00:00Z"
+ *   - Long date strings:  "May 28, 2026"
  *   - Short date strings: "Sun, Jun 1"  (assumes current year)
- *   - Game-clock strings: "Q4 2:14", "Q3 8:55", "5th inning", "7 IP"
- *     → treated as game-day (returns today's date for recency scoring)
+ *   - Game-clock strings: "Q4 2:14", "5th inning"  → treated as today
  *
  * Returns null if unparseable.
  */
-function parseStoryDate(raw: string): Date | null {
+function parseSignalDate(raw: string): Date | null {
   if (!raw) return null;
 
-  // Game-clock patterns → treat as today (recent game)
+  // Game-clock / live-game patterns → treat as today
   if (/^Q\d|inning|IP$|:\d{2}$/.test(raw.trim())) {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -66,7 +75,6 @@ function parseStoryDate(raw: string): Date | null {
     if (!isNaN(parsed.getTime())) return parsed;
   }
 
-  // Standard parseable strings ("May 28, 2026" / ISO)
   const parsed = new Date(raw);
   if (!isNaN(parsed.getTime())) return parsed;
 
@@ -74,24 +82,26 @@ function parseStoryDate(raw: string): Date | null {
 }
 
 /**
- * Core scoring function.
+ * Core scoring function — works for any domain.
  *
  * Weights:
- *   Favorite team              +40
- *   Trade/injury/transaction   +25
- *   Trending                   +12
- *   Similar to past saves/likes +15
- *   Recency (within 24 h)      +10
- *   Decay (older than 3 days)  -20
+ *   Preference match (any domain)    +40
+ *   High-value type (action news)    +25
+ *   Trending                         +12
+ *   Similar to past saves/likes      +15
+ *   Recency (within 24 h)            +10
+ *   Decay (older than 3 days)        -20
  *
- * Final score is clamped to [0, 100].
+ * Final score clamped to [0, 100].
  */
 export function calculateSignalScore(
-  story: {
+  signal: {
     id: string;
-    teamId: string;
+    /** Domain-specific entity key — team ID for sports, ticker for finance, etc. */
+    entityKey: string;
+    /** Signal category / type — e.g. TRADE, NEWS, ANALYSIS, HIGHLIGHT */
     type: string;
-    /** Raw timestamp or date string from the mock data */
+    /** ISO timestamp string or legacy date string */
     dateStr: string;
   },
   userPrefs: UserPrefs
@@ -99,51 +109,53 @@ export function calculateSignalScore(
   let score = 0;
   const reasons: string[] = [];
 
-  // ── +40  Favorite team ───────────────────────────────────────────────────
-  if (userPrefs.favoriteTeamIds.includes(story.teamId)) {
+  // ── +40  Preference match (replaces sports-only "Favorite Team") ──────────
+  const prefMatch = userPrefs.matchedPreferenceValues.some(
+    (pref) =>
+      pref === signal.entityKey ||
+      pref.toLowerCase().includes(signal.entityKey.toLowerCase()) ||
+      signal.entityKey.toLowerCase().includes(pref.toLowerCase())
+  );
+  if (prefMatch) {
     score += 40;
-    reasons.push("Favorite Team +40");
+    reasons.push("Preference Match +40");
   }
 
-  // ── +25  Trade / injury / transaction news ───────────────────────────────
-  if (TRANSACTION_TYPES.has(story.type)) {
+  // ── +25  High-value / actionable signal type ──────────────────────────────
+  if (HIGH_VALUE_TYPES.has(signal.type)) {
     score += 25;
-    reasons.push("Trade & Transaction News +25");
+    reasons.push("High-Value Signal +25");
   }
 
-  // ── +12  Trending ────────────────────────────────────────────────────────
-  if (TRENDING_STORY_IDS.has(story.id)) {
+  // ── +12  Trending ─────────────────────────────────────────────────────────
+  if (TRENDING_SIGNAL_IDS.has(signal.id)) {
     score += 12;
     reasons.push("Trending +12");
   }
 
   // ── +15  Similar to past saves / likes ───────────────────────────────────
-  const matchedCategory = userPrefs.likedCategories.includes(story.type);
-  const matchedStory = userPrefs.likedStoryIds.includes(story.id);
-  if (matchedCategory || matchedStory) {
+  const matchedCategory = userPrefs.likedCategories.includes(signal.type);
+  const matchedSignal = userPrefs.likedSignalIds.includes(signal.id);
+  if (matchedCategory || matchedSignal) {
     score += 15;
     reasons.push("Similar to Your Interests +15");
   }
 
-  // ── Recency / decay ──────────────────────────────────────────────────────
-  const storyDate = parseStoryDate(story.dateStr);
-  if (storyDate) {
+  // ── Recency / decay ───────────────────────────────────────────────────────
+  const signalDate = parseSignalDate(signal.dateStr);
+  if (signalDate) {
     const now = new Date();
-    const ageMs = now.getTime() - storyDate.getTime();
-    const ageDays = ageMs / (1000 * 60 * 60 * 24);
+    const ageDays =
+      (now.getTime() - signalDate.getTime()) / (1000 * 60 * 60 * 24);
 
     if (ageDays <= 1) {
       score += 10;
       reasons.push("Recent (within 24h) +10");
     } else if (ageDays > 3) {
       score -= 20;
-      reasons.push("Older Story -20");
+      reasons.push("Older Signal -20");
     }
-    // Between 1–3 days: no modifier (neutral recency)
   }
 
-  // Clamp to [0, 100]
-  score = Math.max(0, Math.min(100, score));
-
-  return { signalScore: score, reasons };
+  return { signalScore: Math.max(0, Math.min(100, score)), reasons };
 }
