@@ -5,7 +5,11 @@
       "Bash(replit --help)",
       "Bash(npx tsc *)",
       "Bash(npm run *)",
-      "mcp__claude_ai_Replit__resolve_app_by_name"
+      "mcp__claude_ai_Replit__resolve_app_by_name",
+      "Bash(timeout 180 pnpm run typecheck)",
+      "Bash(timeout 120 tsc -p tsconfig.json --noEmit)",
+      "Bash(tsc -p tsconfig.json --noEmit)",
+      "Bash(pnpm run *)"
     ]
   }
 }

@@ -147,10 +147,13 @@ function parseUserPrefs(req: Request): UserPrefs {
           .filter(Boolean)
       : [];
 
+  const favoriteTeamIds = csv(req.query.favoriteTeams);
+  const likedCategories = csv(req.query.likedCategories);
+
   return {
-    favoriteTeamIds: csv(req.query.favoriteTeams),
-    likedCategories: csv(req.query.likedCategories),
-    likedStoryIds: csv(req.query.likedStoryIds),
+    matchedPreferenceValues: [...favoriteTeamIds, ...likedCategories],
+    likedCategories,
+    likedSignalIds: csv(req.query.likedStoryIds),
   };
 }
 
@@ -160,7 +163,7 @@ function scoreTeam(
   team: Awaited<ReturnType<typeof fetchAllTeams>>[0],
   prefs: UserPrefs
 ) {
-  const base = { teamId: team.id };
+  const base = { entityKey: team.id };
 
   const scoredScore = {
     ...team.score,
