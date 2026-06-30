@@ -24,7 +24,7 @@ function Router() {
           // regardless of whatever URL the tab was previously sitting at.
           // replace() (not href=) so the stale pre-onboarding /team/:id URL is not
           // left in history — otherwise browser Back could return to that card.
-          window.location.replace(import.meta.env.BASE_URL);
+          window.location.replace("/");
         }}
       />
     );
