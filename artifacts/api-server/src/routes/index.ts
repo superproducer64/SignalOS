@@ -5,6 +5,7 @@ import onboardingRouter from "./onboarding";
 import userRouter from "./user";
 import collectRouter from "./collect";
 import signalsRouter from "./signals";
+import captureRouter from "./capture";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(onboardingRouter);
 router.use(userRouter);
 router.use(collectRouter);
 router.use(signalsRouter);
+router.use(captureRouter);
 
 export default router;

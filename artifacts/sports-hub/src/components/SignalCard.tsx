@@ -60,14 +60,14 @@ export function SignalCard({
   hero?: boolean;
 }) {
   const color = domainColor(signal.source_domain);
-  const label = domainLabel(signal.source_domain);
+  const label = signal.userSubmitted ? "You" : domainLabel(signal.source_domain);
   const summary = cleanSummary(signal.summary);
 
   return (
     <article
-      className={`bg-card border border-border/60 rounded-xl overflow-hidden ${
+      className={`bg-card border rounded-xl overflow-hidden ${
         hero ? "shadow-lg" : ""
-      }`}
+      } ${signal.userSubmitted ? "border-primary/40" : "border-border/60"}`}
       data-testid={`signal-card-${signal.signal_id}`}
     >
       <div className="p-4">
@@ -79,9 +79,15 @@ export function SignalCard({
           >
             {label}
           </span>
-          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
-            {signal.category}
-          </span>
+          {signal.userSubmitted ? (
+            <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">
+              You submitted this
+            </span>
+          ) : (
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+              {signal.category}
+            </span>
+          )}
           <div className="flex-1" />
           <span
             className="text-[11px] font-black tabular-nums"

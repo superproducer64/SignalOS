@@ -9,6 +9,7 @@ export interface SignalItem {
   signal_score: number;
   reasons: string[];
   created_at: string;
+  userSubmitted?: boolean;
 }
 
 export function useSignalFeed(domains: string[]) {

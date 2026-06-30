@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(curl *)",
-      "Bash(replit --help)"
+      "Bash(replit --help)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)"
     ]
   }
 }

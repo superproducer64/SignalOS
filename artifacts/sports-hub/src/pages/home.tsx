@@ -4,10 +4,11 @@ import type { TeamCard } from "@workspace/api-client-react";
 import { StoryCard, teamToStories, type Story } from "@/components/StoryCard";
 import { SignalCard } from "@/components/SignalCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, X, Bookmark, Zap } from "lucide-react";
+import { Search, X, Bookmark, Zap, Send } from "lucide-react";
 import { useSavedTeams } from "@/hooks/use-saved-teams";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { useSignalFeed } from "@/hooks/use-signal-feed";
+import { useSignalFeed, type SignalItem } from "@/hooks/use-signal-feed";
+import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 
 /** Pick the first highlight story for a team, fall back to score */
@@ -133,8 +134,9 @@ function SectionLabel({
 }
 
 export default function Home() {
-  const { user, isLoading: userLoading } = useCurrentUser();
+  const { user, isLoading: userLoading, userId } = useCurrentUser();
   const { isSaved, savedIds } = useSavedTeams();
+  const { toast } = useToast();
 
   const hasSports = user?.hasSportsInterest ?? false;
   const signalDomains = user?.signalDomains ?? [];
@@ -161,6 +163,35 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeTeamId, setActiveTeamId] = useState<string | null>(null);
+
+  // Capture input state
+  const [captureText, setCaptureText] = useState("");
+  const [captureLoading, setCaptureLoading] = useState(false);
+  const [capturedSignals, setCapturedSignals] = useState<SignalItem[]>([]);
+
+  async function handleCapture() {
+    const text = captureText.trim();
+    if (!text || !userId || captureLoading) return;
+    setCaptureLoading(true);
+    try {
+      const res = await fetch("/api/capture", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, text }),
+      });
+      if (!res.ok) throw new Error("Failed to save signal");
+      const signal = (await res.json()) as SignalItem;
+      setCaptureText("");
+      toast({ title: "Saved to your signal." });
+      if (signal.signal_score > 30) {
+        setCapturedSignals((prev) => [{ ...signal, userSubmitted: true }, ...prev]);
+      }
+    } catch {
+      toast({ title: "Couldn't save signal", variant: "destructive" });
+    } finally {
+      setCaptureLoading(false);
+    }
+  }
 
   // Sports story list
   const allStories: Story[] = [];
@@ -194,7 +225,8 @@ export default function Home() {
     );
   });
 
-  const filteredSignals = signals.filter((s) => {
+  const allSignals = [...capturedSignals, ...signals];
+  const filteredSignals = allSignals.filter((s) => {
     if (!query.trim()) return true;
     const q = query.toLowerCase();
     return (
@@ -351,6 +383,32 @@ export default function Home() {
           <EmptySignalState name={displayName} />
         ) : (
           <>
+            {/* ── Capture input ── */}
+            {signalDomains.length > 0 && (
+              <div className="px-4 pt-4 pb-1">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Spotted something? Jot it down."
+                    value={captureText}
+                    onChange={(e) => setCaptureText(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleCapture()}
+                    disabled={captureLoading}
+                    className="flex-1 bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCapture}
+                    disabled={!captureText.trim() || captureLoading}
+                    className="p-2 rounded-lg bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 transition-colors disabled:opacity-40 disabled:pointer-events-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    aria-label="Submit capture"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* ── Sports section ── */}
             {hasSports && (
               <>
