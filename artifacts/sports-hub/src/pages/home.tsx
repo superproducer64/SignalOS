@@ -157,7 +157,7 @@ export default function Home() {
   });
 
   // Generic signal feed — only fetched when user has non-sports domains
-  const { signals, isLoading: signalsLoading } = useSignalFeed(
+  const { signals, isFetched: signalsFetched } = useSignalFeed(
     userLoading ? [] : signalDomains,
     userId ?? undefined
   );
@@ -245,14 +245,16 @@ export default function Home() {
   const isLoading =
     userLoading ||
     (hasSports && teamsLoading) ||
-    (signalDomains.length > 0 && signalsLoading);
+    (signalDomains.length > 0 && !signalsFetched);
 
-  // True empty: user loaded, no sports, no signal domains, or domains loaded but 0 signals
+  // True empty: user loaded, no sports, no signal domains, or the signal feed
+  // has actually settled (not merely "not loading" — see useSignalFeed's
+  // isFetched) with zero results
   const hasNoContent =
     !userLoading &&
     !hasSports &&
     (signalDomains.length === 0 ||
-      (!signalsLoading && signals.length === 0));
+      (signalsFetched && signals.length === 0));
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground pb-10">

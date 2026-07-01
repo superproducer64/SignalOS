@@ -16,7 +16,7 @@ export function useSignalFeed(domains: string[], userId?: string) {
   const enabled = domains.length > 0;
   const domainsKey = domains.slice().sort().join(",");
 
-  const { data, isLoading } = useQuery<SignalItem[]>({
+  const { data, isLoading, isFetched } = useQuery<SignalItem[]>({
     queryKey: ["/api/signals", domainsKey, userId ?? ""],
     queryFn: async () => {
       let url = `/api/signals?domains=${encodeURIComponent(domainsKey)}&limit=40`;
@@ -32,5 +32,6 @@ export function useSignalFeed(domains: string[], userId?: string) {
   return {
     signals: data ?? [],
     isLoading: enabled && isLoading,
+    isFetched: enabled && isFetched,
   };
 }
