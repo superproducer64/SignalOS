@@ -401,6 +401,13 @@ export default function Home() {
                     <Send className="w-4 h-4" />
                   </button>
                 </div>
+                <Link
+                  href="/captures"
+                  data-testid="link-view-captures"
+                  className="inline-block mt-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors no-underline"
+                >
+                  View all captures →
+                </Link>
               </div>
             )}
 

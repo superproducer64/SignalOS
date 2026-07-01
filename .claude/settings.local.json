@@ -20,7 +20,23 @@
       "Bash(pnpm --filter api-server run build)",
       "Bash(pnpm --filter sports-hub run typecheck)",
       "Bash(pnpm --filter sports-hub run build)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(pnpm --filter @workspace/api-server run typecheck)",
+      "Bash(pnpm --filter @workspace/sports-hub run typecheck)",
+      "Bash(pnpm --filter @workspace/api-server run build)",
+      "Bash(pnpm --filter @workspace/sports-hub run build)",
+      "Bash(PORT=5000 pnpm --filter @workspace/sports-hub run build)",
+      "Bash(PORT=18849 BASE_PATH=/ pnpm --filter @workspace/sports-hub run build)",
+      "Skill(run)",
+      "Bash(kill 73 234 249)",
+      "Bash(nohup pnpm --filter @workspace/api-server run dev)",
+      "Bash(disown)",
+      "Bash(PORT=8080 nohup pnpm --filter @workspace/api-server run dev)",
+      "Bash(env)",
+      "mcp__claude_ai_Supabase__list_projects",
+      "mcp__claude_ai_Supabase__execute_sql",
+      "Bash(command -v chromium-cli)",
+      "Bash(chromium-cli --help)"
     ]
   }
 }
