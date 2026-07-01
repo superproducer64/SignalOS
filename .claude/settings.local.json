@@ -36,7 +36,18 @@
       "mcp__claude_ai_Supabase__list_projects",
       "mcp__claude_ai_Supabase__execute_sql",
       "Bash(command -v chromium-cli)",
-      "Bash(chromium-cli --help)"
+      "Bash(chromium-cli --help)",
+      "Bash(pkill -f \"dist/index.mjs\")",
+      "Bash(PORT=8080 NODE_ENV=production nohup node --enable-source-maps artifacts/api-server/dist/index.mjs)",
+      "Bash(echo \"started pid $!\")",
+      "Bash(printenv)",
+      "mcp__claude_ai_Supabase__list_tables",
+      "mcp__claude_ai_Supabase__apply_migration",
+      "Bash(PORT=18849 BASE_PATH=/ npm run build)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(kill 16081)",
+      "Bash(PORT=8080 node --enable-source-maps artifacts/api-server/dist/index.mjs)"
     ]
   }
 }
