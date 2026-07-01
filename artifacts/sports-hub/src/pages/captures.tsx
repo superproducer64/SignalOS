@@ -14,6 +14,13 @@ interface Capture {
   created_at: string;
 }
 
+interface Credibility {
+  total: number;
+  hits: number;
+  misses: number;
+  accuracy: number;
+}
+
 const FEED_THRESHOLD = 30;
 
 function timeAgo(iso: string): string {
@@ -93,6 +100,28 @@ function CaptureCard({
   );
 }
 
+function CredibilityStat({ credibility }: { credibility: Credibility }) {
+  if (credibility.total === 0) return null;
+
+  const percent = Math.round(credibility.accuracy * 100);
+
+  return (
+    <div
+      className="px-4 pt-4"
+      data-testid="stat-signal-accuracy"
+    >
+      <div className="rounded-lg border border-border/40 bg-card/50 px-3 py-2">
+        <p className="text-xs text-muted-foreground">
+          Your signal accuracy:{" "}
+          <span className="font-bold text-foreground">{percent}%</span>{" "}
+          ({credibility.hits} of {credibility.total} captures matched your
+          interests)
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
@@ -120,6 +149,18 @@ export default function Captures() {
       const res = await fetch(`/api/captures?userId=${encodeURIComponent(userId!)}`);
       if (!res.ok) throw new Error("Failed to fetch captures");
       return res.json() as Promise<Capture[]>;
+    },
+    enabled: !!userId,
+  });
+
+  const { data: credibility } = useQuery<Credibility>({
+    queryKey: ["/api/user/credibility", userId ?? ""],
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/user/${encodeURIComponent(userId!)}/credibility`
+      );
+      if (!res.ok) throw new Error("Failed to fetch signal accuracy");
+      return res.json() as Promise<Credibility>;
     },
     enabled: !!userId,
   });
@@ -175,6 +216,8 @@ export default function Captures() {
           <EmptyState />
         ) : (
           <>
+            {credibility && <CredibilityStat credibility={credibility} />}
+
             {inFeed.length > 0 && (
               <div className="px-4 pt-4">
                 <div className="mb-3">

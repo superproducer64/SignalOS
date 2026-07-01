@@ -76,4 +76,33 @@ async function handleGetUser(req: Request, res: import("express").Response) {
 router.get("/user", handleGetUser);
 router.get("/user/:userId", handleGetUser);
 
+/**
+ * GET /api/user/:userId/credibility
+ * Tallies the user's captured signals into a simple "signal accuracy" stat.
+ * Informational only — does not feed back into scoring.
+ */
+router.get("/user/:userId/credibility", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const { data, error } = await supabase
+      .from("signals")
+      .select("signal_score")
+      .eq("source_domain", "captured")
+      .eq("user_id", userId);
+
+    if (error) throw error;
+
+    const scores = (data ?? []) as { signal_score: number }[];
+    const total = scores.length;
+    const hits = scores.filter((s) => s.signal_score > 30).length;
+    const misses = total - hits;
+    const accuracy = total > 0 ? hits / total : 0;
+
+    return res.json({ total, hits, misses, accuracy });
+  } catch (err) {
+    return res.status(500).json({ message: (err as Error).message });
+  }
+});
+
 export default router;
