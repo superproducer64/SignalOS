@@ -169,6 +169,9 @@ export default function Home() {
   const [captureText, setCaptureText] = useState("");
   const [captureLoading, setCaptureLoading] = useState(false);
 
+  // Signals the user dismissed via "Not Interested" — hidden without a refetch
+  const [dismissedSignalIds, setDismissedSignalIds] = useState<Set<string>>(new Set());
+
   async function handleCapture() {
     const text = captureText.trim();
     if (!text || !userId || captureLoading) return;
@@ -222,6 +225,7 @@ export default function Home() {
   });
 
   const filteredSignals = signals.filter((s) => {
+    if (dismissedSignalIds.has(s.signal_id)) return false;
     if (!query.trim()) return true;
     const q = query.toLowerCase();
     return (
@@ -481,6 +485,10 @@ export default function Home() {
                         key={signal.signal_id}
                         signal={{ ...signal, userSubmitted: signal.source_domain === "captured" }}
                         hero={i === 0 && !hasSports && !query}
+                        userId={userId ?? undefined}
+                        onDismiss={(signalId) =>
+                          setDismissedSignalIds((prev) => new Set(prev).add(signalId))
+                        }
                       />
                     ))
                   ) : (

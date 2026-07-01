@@ -15,6 +15,10 @@ export interface UserPrefs {
   likedCategories: string[];
   /** Specific signal IDs the user has liked or saved */
   likedSignalIds: string[];
+  /** source_domain values the user marked "Less Like This" on */
+  dismissedDomains?: string[];
+  /** categories the user marked "Less Like This" on */
+  dismissedCategories?: string[];
 }
 
 export interface SignalResult {
@@ -91,6 +95,7 @@ function parseSignalDate(raw: string): Date | null {
  *   Similar to past saves/likes      +15
  *   Recency (within 24 h)            +10
  *   Decay (older than 3 days)        -20
+ *   Dismissed domain/category        -30
  *
  * Final score clamped to [0, 100].
  */
@@ -103,6 +108,8 @@ export function calculateSignalScore(
     type: string;
     /** ISO timestamp string or legacy date string */
     dateStr: string;
+    /** Source domain — e.g. technology, finance, captured */
+    sourceDomain?: string;
   },
   userPrefs: UserPrefs
 ): SignalResult {
@@ -155,6 +162,18 @@ export function calculateSignalScore(
       score -= 20;
       reasons.push("Older Signal -20");
     }
+  }
+
+  // ── -30  Dismissed domain/category ("Less Like This") ─────────────────────
+  const dismissedDomainMatch =
+    !!signal.sourceDomain &&
+    (userPrefs.dismissedDomains ?? []).includes(signal.sourceDomain);
+  const dismissedCategoryMatch = (userPrefs.dismissedCategories ?? []).includes(
+    signal.type
+  );
+  if (dismissedDomainMatch || dismissedCategoryMatch) {
+    score -= 30;
+    reasons.push("Similar to Dismissed -30");
   }
 
   return { signalScore: Math.max(0, Math.min(100, score)), reasons };

@@ -1,4 +1,13 @@
+import { useState } from "react";
+import { MoreHorizontal } from "lucide-react";
 import type { SignalItem } from "@/hooks/use-signal-feed";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 const DOMAIN_LABELS: Record<string, string> = {
   technology: "Tech",
@@ -55,19 +64,60 @@ function cleanSummary(raw: string): string {
 export function SignalCard({
   signal,
   hero = false,
+  userId,
+  onDismiss,
 }: {
   signal: SignalItem;
   hero?: boolean;
+  userId?: string;
+  onDismiss?: (signalId: string) => void;
 }) {
+  const { toast } = useToast();
   const color = domainColor(signal.source_domain);
   const label = signal.userSubmitted ? "You" : domainLabel(signal.source_domain);
   const summary = cleanSummary(signal.summary);
 
+  const [removing, setRemoving] = useState(false);
+  const [dimmed, setDimmed] = useState(false);
+
+  async function postAction(action: "dismissed" | "less_like_this") {
+    if (!userId) return;
+    try {
+      await fetch("/api/signal-actions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          signalId: signal.signal_id,
+          action,
+          source_domain: signal.source_domain,
+          category: signal.category,
+        }),
+      });
+    } catch {
+      // best-effort — UI already reflects the action locally
+    }
+  }
+
+  function handleNotInterested() {
+    setRemoving(true);
+    postAction("dismissed");
+    window.setTimeout(() => onDismiss?.(signal.signal_id), 200);
+  }
+
+  function handleLessLikeThis() {
+    setDimmed(true);
+    postAction("less_like_this");
+    toast({ title: "Got it", description: "We'll show fewer signals like this." });
+  }
+
   return (
     <article
-      className={`bg-card border rounded-xl overflow-hidden ${
+      className={`bg-card border rounded-xl overflow-hidden transition-all duration-200 ${
         hero ? "shadow-lg" : ""
-      } ${signal.userSubmitted ? "border-primary/40" : "border-border/60"}`}
+      } ${signal.userSubmitted ? "border-primary/40" : "border-border/60"} ${
+        removing ? "opacity-0 scale-95" : dimmed ? "opacity-50" : "opacity-100"
+      }`}
       data-testid={`signal-card-${signal.signal_id}`}
     >
       <div className="p-4">
@@ -96,6 +146,36 @@ export function SignalCard({
             {signal.signal_score}
           </span>
           <span className="text-[10px] text-muted-foreground">score</span>
+          {userId && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Signal options"
+                  data-testid={`button-signal-menu-${signal.signal_id}`}
+                  className="p-0.5 -mr-1 rounded-full text-muted-foreground/50 hover:text-foreground hover:bg-white/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  <MoreHorizontal className="w-3.5 h-3.5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem
+                  onClick={handleNotInterested}
+                  data-testid={`menu-not-interested-${signal.signal_id}`}
+                  className="text-xs"
+                >
+                  Not Interested
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleLessLikeThis}
+                  data-testid={`menu-less-like-this-${signal.signal_id}`}
+                  className="text-xs"
+                >
+                  Less Like This
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
 
         {/* Headline */}
