@@ -64,7 +64,14 @@
       "Read(//home/runner/**)",
       "Bash(find / -maxdepth 0)",
       "Read(//proc/125/fd/**)",
-      "Bash(echo \"---exit:$?---\")"
+      "Bash(echo \"---exit:$?---\")",
+      "Bash(PORT=18849 nohup pnpm run serve)",
+      "Bash(echo \"started $!\")",
+      "Bash(netstat -tlnp)",
+      "Bash(npx --yes playwright --version)",
+      "Bash(grep -i -E \"bin/|/chrome$\")",
+      "Bash(PORT=5000 npm run build)",
+      "Bash(git commit *)"
     ]
   }
 }
