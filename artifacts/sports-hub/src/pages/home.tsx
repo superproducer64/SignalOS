@@ -4,11 +4,12 @@ import type { TeamCard } from "@workspace/api-client-react";
 import { StoryCard, teamToStories, type Story } from "@/components/StoryCard";
 import { SignalCard } from "@/components/SignalCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, X, Bookmark, Zap, Send } from "lucide-react";
+import { Search, X, Bookmark, Zap, Send, LogOut } from "lucide-react";
 import { useSavedTeams } from "@/hooks/use-saved-teams";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useSignalFeed } from "@/hooks/use-signal-feed";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 import { Link } from "wouter";
 
 /** Pick the first highlight story for a team, fall back to score */
@@ -270,6 +271,14 @@ export default function Home() {
               </h1>
             )}
           </div>
+          <button
+            onClick={() => supabase.auth.signOut()}
+            data-testid="button-sign-out"
+            className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            type="button"
+          >
+            <LogOut className="w-3 h-3" /> Sign Out
+          </button>
           <button
             onClick={() => {
               setSearchOpen((v) => !v);

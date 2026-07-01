@@ -47,7 +47,13 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(kill 16081)",
-      "Bash(PORT=8080 node --enable-source-maps artifacts/api-server/dist/index.mjs)"
+      "Bash(PORT=8080 node --enable-source-maps artifacts/api-server/dist/index.mjs)",
+      "mcp__claude_ai_Supabase__get_publishable_keys",
+      "Bash(pnpm install *)",
+      "Bash(PORT=8080 BASE_PATH=/ pnpm run build)",
+      "Bash(PORT=8081 BASE_PATH=/ pnpm run build)",
+      "Bash(kill %1)",
+      "Bash(git check-ignore *)"
     ]
   }
 }

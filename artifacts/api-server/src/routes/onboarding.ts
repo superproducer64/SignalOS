@@ -5,6 +5,18 @@ const router = Router();
 
 router.post("/onboarding", async (req, res) => {
   try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    const { data: authData, error: authErr } = await supabase.auth.getUser(
+      authHeader.slice("Bearer ".length)
+    );
+    if (authErr || !authData.user) {
+      return res.status(401).json({ message: "Invalid or expired session" });
+    }
+    const userId = authData.user.id;
+
     const { name, email, ageRange, demographicType, interests } = req.body as {
       name: string;
       email: string;
@@ -17,40 +29,35 @@ router.post("/onboarding", async (req, res) => {
       return res.status(400).json({ message: "name and email are required" });
     }
 
-    // Upsert user row — write demographic fields directly onto users table
+    // Upsert the users row keyed by the authenticated Supabase user ID
     const { data: existing } = await supabase
       .from("users")
       .select("user_id")
-      .eq("email", email.trim())
+      .eq("user_id", userId)
       .limit(1);
 
-    let userId: string;
-
     if (existing && existing.length > 0) {
-      userId = (existing[0] as { user_id: string }).user_id;
-      // Update the existing row with fresh demographic data
       const { error: updateErr } = await supabase
         .from("users")
         .update({
           name: name.trim(),
+          email: email.trim(),
           age_range: ageRange ?? null,
           demographic_type: demographicType ?? null,
+          onboarding_complete: true,
         })
         .eq("user_id", userId);
       if (updateErr) throw updateErr;
     } else {
-      const { data: created, error: createErr } = await supabase
-        .from("users")
-        .insert({
-          email: email.trim(),
-          name: name.trim(),
-          age_range: ageRange ?? null,
-          demographic_type: demographicType ?? null,
-        })
-        .select("user_id")
-        .single();
+      const { error: createErr } = await supabase.from("users").insert({
+        user_id: userId,
+        email: email.trim(),
+        name: name.trim(),
+        age_range: ageRange ?? null,
+        demographic_type: demographicType ?? null,
+        onboarding_complete: true,
+      });
       if (createErr) throw createErr;
-      userId = (created as { user_id: string }).user_id;
     }
 
     // Clear and re-insert interest preferences only (demographic fields now live on users row)

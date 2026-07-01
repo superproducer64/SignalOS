@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CheckCircle2, ArrowRight, Shield, Zap } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 // ── Data ─────────────────────────────────────────────────────────────────────
 
@@ -413,7 +414,7 @@ function DoneScreen({
 
 const EMPTY_INTERESTS = Object.fromEntries(
   CATEGORIES.map((c) => [c.id, { selected: [], freeText: "" }])
-) as Record<CategoryId, InterestState>;
+) as unknown as Record<CategoryId, InterestState>;
 
 export default function Onboarding({ onComplete }: { onComplete: () => void }) {
   const [step, setStep] = useState(0);
@@ -436,9 +437,17 @@ export default function Onboarding({ onComplete }: { onComplete: () => void }) {
     setSubmitting(true);
     setSubmitError(null);
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) throw new Error("Your session expired. Please sign in again.");
+
       const res = await fetch("/api/onboarding", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           name: form.name.trim(),
           email: form.email.trim(),
@@ -451,9 +460,6 @@ export default function Onboarding({ onComplete }: { onComplete: () => void }) {
         const data = await res.json().catch(() => ({}));
         throw new Error((data as { message?: string }).message ?? "Something went wrong");
       }
-      const data = await res.json() as { userId: string };
-      localStorage.setItem("signalos_onboarding_complete", "1");
-      localStorage.setItem("signalos_user_id", data.userId);
       onComplete();
     } catch (err) {
       setSubmitError((err as Error).message);
