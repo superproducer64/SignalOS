@@ -54,7 +54,12 @@
       "Bash(PORT=8081 BASE_PATH=/ pnpm run build)",
       "Bash(kill %1)",
       "Bash(git check-ignore *)",
-      "Bash(PORT=5000 pnpm run build)"
+      "Bash(PORT=5000 pnpm run build)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(kill 227)",
+      "Bash(pnpm --filter @workspace/api-server run dev)",
+      "Bash(PORT=8080 pnpm *)",
+      "Bash(python3 -m json.tool)"
     ]
   }
 }
