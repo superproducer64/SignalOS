@@ -49,11 +49,10 @@ async function handleGetUser(req: Request, res: import("express").Response) {
       v.startsWith("sports:")
     );
 
-    // Derive signal domains from non-sports interests (e.g. "technology:AI" → "technology")
+    // Derive signal domains from all interests (e.g. "technology:AI" → "technology")
     const signalDomains = [
       ...new Set(
         interestValues
-          .filter((v: string) => !v.startsWith("sports:"))
           .map((v: string) => v.split(":")[0])
           .filter(Boolean)
       ),
